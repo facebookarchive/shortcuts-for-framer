@@ -7,7 +7,7 @@
 
   Readme:
   https://github.com/facebook/shortcuts-for-framer
-  
+
   License:
   https://github.com/facebook/shortcuts-for-framer/blob/master/LICENSE.md
 ###
@@ -15,11 +15,11 @@
 
 
 
-### 
+###
   CONFIGURATION
 ###
 
-Framer.config.displayInDevice = 
+Framer.config.displayInDevice =
   enabled: true
   resizeToFit: true
   containerView: PSD?.Phone
@@ -36,11 +36,11 @@ Framer.config.defaultAnimation =
 
 Framer.config.fadeAnimation =
   curve: "ease-in-out"
-  time: 200  
+  time: 200
 
 Framer.config.slideAnimation =
   curve: "ease-in-out"
-  time: 200  
+  time: 200
 
 
 
@@ -79,14 +79,14 @@ Framer.utils.everyView (view) ->
 
 ###
   FIND CHILD VIEWS BY NAME
-  
+
   Retrieves subviews of selected view that have a matching name.
-  
+
   getChild: return the first subview whose name includes the given string
   getChildren: return all subviews that match
-  
+
   Useful when eg. iterating over table cells. Use getChild to access the button found in each cell. This is **case insensitive**.
-  
+
   Example:
   `topView = NewsFeed.getChild("Top")` Looks for view whose name matches Top. Returns the first matching view.
 
@@ -97,17 +97,17 @@ View::getChild = (needle) ->
   for k of @subViews
     subView = @subViews[k]
     return subView if subView.name.toLowerCase().indexOf(needle.toLowerCase()) isnt -1
-  
-  # Recursively search children of children 
+
+  # Recursively search children of children
   for k of @subViews
     subView = @subViews[k]
     found = subView.getChild(needle)
     return found if found
-  
+
 
 View::getChildren = (needle) ->
   results = []
-  
+
   for k of @subViews
     subView = @subViews[k]
     results = results.concat subView.getChildren(needle)
@@ -120,20 +120,36 @@ View::getChildren = (needle) ->
 
 ###
   CONVERT A NUMBER RANGE TO ANOTHER
-  
+
   Converts a number within one range to another range
-  
+
   Example:
   We want to map the opacity of a view to its x location.
-  
+
   The opacity will be 0 if the X coordinate is 0, and it will be 1 if the X coordinate is 640. All the X coordinates in between will result in intermediate values between 0 and 1.
-  
+
   `myView.opacity = convertRange(0, 640, myView.x, 0, 1)`
+
+  By default, this value might be outside the bounds of NewMin and NewMax if the OldValue is outside OldMin and OldMax. If you want to cap the final value to NewMin and NewMax, set capped to true.
+  Make sure NewMin is smaller than NewMax if you're using this. If you need an inverse proportion, try swapping OldMin and OldMax.
 ###
-Framer.utils.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax) ->
+Framer.utils.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, capped) ->
   OldRange = (OldMax - OldMin)
   NewRange = (NewMax - NewMin)
-  (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
+  newValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
+
+  if capped
+    if NewValue > NewMax
+      newMax
+    else if NewValue < NewMin
+      newMin
+    else
+      NewValue
+  else
+    newValue
+
+
+
 
 
 ###
@@ -143,7 +159,7 @@ Framer.utils.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax) ->
 
   Example:
   The x coordinate of MyView is initially 400 (from the PSD)
-  
+
   ```MyView.x = 200; // now we set it to 200.
   View.x = View.originalFrame.x // now we set it back to its original value, 400.```
 ###
@@ -165,9 +181,10 @@ View::hover = (enterFunction, leaveFunction) ->
 ###
   SHORTHAND ANIMATION SYNTAX
 
-  A shorter animation syntax that uses the default values `Framer.defaultAnimation.curve` and `Framer.defaultAnimation.time`.
+  A shorter animation syntax that mirrors the jQuery syntax:
+  view.animate(properties, [time], [curve], [callback])
 
-  animateTo also sets isAnimating variables on the element depending on whether an animation is in progress. So before starting an animation, you can check if there is already an ongoing one.
+  All parameters except properties are optional and can be omitted.
 
   Old:
   ```myview.animate({
@@ -191,8 +208,21 @@ View::hover = (enterFunction, leaveFunction) ->
 
 
 
-View::animateTo = (properties, time) ->
+View::animateTo = (properties, first, second, third) ->
   thisView = this
+  time = curve = callback = null
+
+  if typeOf(first) == "number"
+    time = first
+    if typeOf(second) == "string"
+      curve = second
+      callback = third
+    callback = second if typeOf(second) == "function"
+  else if typeOf(first) == "string"
+    curve = first
+    callback = second if typeOf(second) == "function"
+  else if typeOf(first) == "function"
+    callback = first
 
   thisView.animationTo = new Animation
     view: thisView
@@ -200,16 +230,21 @@ View::animateTo = (properties, time) ->
     curve: Framer.config.defaultAnimation.curve
     time: Framer.config.defaultAnimation.time
 
-  if time?
+  if time? && !curve?
     thisView.animationTo.curve = 'ease-in-out'
     thisView.animationTo.time = time
+
+  if !curve?
+    thisView.animationTo.curve = curve
 
   thisView.animationTo.on 'start', ->
     thisView.isAnimating = true
 
   thisView.animationTo.on 'end', ->
     thisView.isAnimating = null
-  
+    if callback?
+      callback()
+
   thisView.animationTo.start()
 
 ###
@@ -218,7 +253,7 @@ View::animateTo = (properties, time) ->
   Shorthand syntax for animating views in and out of the viewport. Assumes that the view you are animating is a whole screen and has the same dimensions as your container.
 
   To use this, you need to place everything in a parent view called Phone. The library will automatically enable masking and size it to 640 * 1136.
-  
+
   Example:
   * `myView.slideToLeft()` will animate the view **to** the left corner of the screen (from its current position)
 
@@ -229,10 +264,10 @@ View::animateTo = (properties, time) ->
   * Framer.config.slideAnimation.curve
 
 
-  How to read the configuration: 
+  How to read the configuration:
   ```slideFromLeft:
     property: "x"     // animate along the X axis
-    factor: "width"   
+    factor: "width"
     from: -1          // start value: outside the left corner ( x = -width_phone )
     to: 0             // end value: inside the left corner ( x = width_view )
   ```
@@ -304,7 +339,7 @@ _.each Framer.config.slideAnimations, (opts, name) ->
     unless _phone
       console.log "Please wrap your project in a view named Phone, or set Framer.config.containerView to whatever your wrapper view is."
       return
-    
+
     _property = opts.property
     _factor = _phone[opts.factor]
 
@@ -315,12 +350,12 @@ _.each Framer.config.slideAnimations, (opts, name) ->
     # Default animation syntax view.animate({_property: 0}) would try to animate '_property' literally, in order for it to blow up to what's in it (eg x), we use this syntax
     _animationConfig = {}
     _animationConfig[_property] = opts.to * _factor
-    
+
     this.animate
       properties: _animationConfig
       time: Framer.config.slideAnimation.time
       curve: Framer.config.slideAnimation.curve
-      
+
 
 
 ###
@@ -392,7 +427,7 @@ Framer.utils.everyView (view) ->
     _down?.hide()
 
     # Create fake hit target (so we don't re-fire events)
-    if _hover or _down 
+    if _hover or _down
       hitTarget = new View
         frame: _default.frame
 
@@ -409,7 +444,7 @@ Framer.utils.everyView (view) ->
         _hover.hide()
 
     # There is a down state, so define down events
-    if _down 
+    if _down
       view.on Events.TouchStart, ->
         _default.hide()
         _hover?.hide() # touch down state overrides hover state
@@ -517,13 +552,13 @@ class Device
     else
       # Window is smaller than mock, so align to top
       @deviceView.y = @handView.y = 0
-      @backgroundView.height = @deviceView.height  
+      @backgroundView.height = @deviceView.height
 
 
 Framer.Device = new Device
 _.defer ->
   Framer.Device.build Framer.config.displayInDevice
-  
+
 
 
 ###

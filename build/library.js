@@ -8,13 +8,13 @@
 
   Readme:
   https://github.com/facebook/shortcuts-for-framer
-  
+
   License:
   https://github.com/facebook/shortcuts-for-framer/blob/master/LICENSE.md
 */
 
 
-/* 
+/*
   CONFIGURATION
 */
 
@@ -93,14 +93,14 @@
 
   /*
     FIND CHILD VIEWS BY NAME
-    
+  
     Retrieves subviews of selected view that have a matching name.
-    
+  
     getChild: return the first subview whose name includes the given string
     getChildren: return all subviews that match
-    
+  
     Useful when eg. iterating over table cells. Use getChild to access the button found in each cell. This is **case insensitive**.
-    
+  
     Example:
     `topView = NewsFeed.getChild("Top")` Looks for view whose name matches Top. Returns the first matching view.
   
@@ -142,24 +142,38 @@
 
   /*
     CONVERT A NUMBER RANGE TO ANOTHER
-    
+  
     Converts a number within one range to another range
-    
+  
     Example:
     We want to map the opacity of a view to its x location.
-    
+  
     The opacity will be 0 if the X coordinate is 0, and it will be 1 if the X coordinate is 640. All the X coordinates in between will result in intermediate values between 0 and 1.
-    
+  
     `myView.opacity = convertRange(0, 640, myView.x, 0, 1)`
+  
+    By default, this value might be outside the bounds of NewMin and NewMax if the OldValue is outside OldMin and OldMax. If you want to cap the final value to NewMin and NewMax, set capped to true.
+    Make sure NewMin is smaller than NewMax if you're using this. If you need an inverse proportion, try swapping OldMin and OldMax.
   */
 
 
-  Framer.utils.convertRange = function(OldMin, OldMax, OldValue, NewMin, NewMax) {
-    var NewRange, OldRange;
+  Framer.utils.convertRange = function(OldMin, OldMax, OldValue, NewMin, NewMax, capped) {
+    var NewRange, OldRange, newValue;
 
     OldRange = OldMax - OldMin;
     NewRange = NewMax - NewMin;
-    return (((OldValue - OldMin) * NewRange) / OldRange) + NewMin;
+    newValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin;
+    if (capped) {
+      if (NewValue > NewMax) {
+        return newMax;
+      } else if (NewValue < NewMin) {
+        return newMin;
+      } else {
+        return NewValue;
+      }
+    } else {
+      return newValue;
+    }
   };
 
   /*
@@ -169,7 +183,7 @@
   
     Example:
     The x coordinate of MyView is initially 400 (from the PSD)
-    
+  
     ```MyView.x = 200; // now we set it to 200.
     View.x = View.originalFrame.x // now we set it back to its original value, 400.```
   */
@@ -197,9 +211,10 @@
   /*
     SHORTHAND ANIMATION SYNTAX
   
-    A shorter animation syntax that uses the default values `Framer.defaultAnimation.curve` and `Framer.defaultAnimation.time`.
+    A shorter animation syntax that mirrors the jQuery syntax:
+    view.animate(properties, [time], [curve], [callback])
   
-    animateTo also sets isAnimating variables on the element depending on whether an animation is in progress. So before starting an animation, you can check if there is already an ongoing one.
+    All parameters except properties are optional and can be omitted.
   
     Old:
     ```myview.animate({
@@ -222,25 +237,49 @@
   */
 
 
-  View.prototype.animateTo = function(properties, time) {
-    var thisView;
+  View.prototype.animateTo = function(properties, first, second, third) {
+    var callback, curve, thisView, time;
 
     thisView = this;
+    time = curve = callback = null;
+    if (typeOf(first) === "number") {
+      time = first;
+      if (typeOf(second) === "string") {
+        curve = second;
+        callback = third;
+      }
+      if (typeOf(second) === "function") {
+        callback = second;
+      }
+    } else if (typeOf(first) === "string") {
+      curve = first;
+      if (typeOf(second) === "function") {
+        callback = second;
+      }
+    } else if (typeOf(first) === "function") {
+      callback = first;
+    }
     thisView.animationTo = new Animation({
       view: thisView,
       properties: properties,
       curve: Framer.config.defaultAnimation.curve,
       time: Framer.config.defaultAnimation.time
     });
-    if (time != null) {
+    if ((time != null) && (curve == null)) {
       thisView.animationTo.curve = 'ease-in-out';
       thisView.animationTo.time = time;
+    }
+    if (curve == null) {
+      thisView.animationTo.curve = curve;
     }
     thisView.animationTo.on('start', function() {
       return thisView.isAnimating = true;
     });
     thisView.animationTo.on('end', function() {
-      return thisView.isAnimating = null;
+      thisView.isAnimating = null;
+      if (callback != null) {
+        return callback();
+      }
     });
     return thisView.animationTo.start();
   };
@@ -251,7 +290,7 @@
     Shorthand syntax for animating views in and out of the viewport. Assumes that the view you are animating is a whole screen and has the same dimensions as your container.
   
     To use this, you need to place everything in a parent view called Phone. The library will automatically enable masking and size it to 640 * 1136.
-    
+  
     Example:
     * `myView.slideToLeft()` will animate the view **to** the left corner of the screen (from its current position)
   
@@ -262,10 +301,10 @@
     * Framer.config.slideAnimation.curve
   
   
-    How to read the configuration: 
+    How to read the configuration:
     ```slideFromLeft:
       property: "x"     // animate along the X axis
-      factor: "width"   
+      factor: "width"
       from: -1          // start value: outside the left corner ( x = -width_phone )
       to: 0             // end value: inside the left corner ( x = width_view )
     ```

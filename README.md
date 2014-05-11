@@ -16,7 +16,7 @@ Include `library.js` right before `app.js` in your Framer `index.html` file.
 * `view.originalFrame` stores the initial position and size of each exported view, so you can easily revert back to them later.
 
 ## Animation
-* `view.animateTo({x: 100})` is a shorthand animation syntax that uses a default time and curve. You can also specify a transition duration like: `view.animateTo({x: 100}, 500)`
+* `view.animateTo({x: 100})` is a shorthand that mirrors jQuery's animation syntax. You can specify a duration, curve and callback in order, and omit the ones you'd like.
 * `view.slideFromLeft()` `view.slideToLeft()` (and similarly Left, Bottom, Top) are quick animation functions to animate full screen views in and out of the viewport. Very useful for prototyping mobile flows.
 * `view.show()` `view.hide()` shows and hides views.
 * `view.fadeIn()` `view.fadeOut()` fades in/out views with an animation. You can use a custom duration too: `view.fadeIn(500)`
@@ -28,12 +28,12 @@ Include `library.js` right before `app.js` in your Framer `index.html` file.
 
 ## Display in Device
 * If your prototype has a parent `Phone` group, we automatically add a phone image around your prototype and resize to fit in a browser screen. Great for presenting!
-* By default, the parent group is called `Phone` and the device is an iPhone in a 640x1136 canvas. Check the `Display In Device` section in the source code to see how you can configure for different devices. 
+* By default, the parent group is called `Phone` and the device is an iPhone in a 640x1136 canvas. Check the `Display In Device` section in the source code to see how you can configure for different devices.
 * Press the space bar key to toggle this on and off.
 
 ## Others
 * `view.getChild('name')` and `view.getChildren('name')` retrieve the children of a view by name. Useful when traversing the layer hierarchy.
-* `Framer.utils.convertRange(OldMin, OldMax, OldValue, NewMin, NewMax)` converts a number `oldValue` from one range `(oldMin, oldMax)` to another `(newMin, newMax)`.
+* `Framer.utils.convertRange(OldMin, OldMax, OldValue, NewMin, NewMax, [capped])` converts a number `oldValue` from one range `(oldMin, oldMax)` to another `(newMin, newMax)`. If you'd like to cap the output to NewMin and NewMax, enable `capped`.
 
 # Questions
 
