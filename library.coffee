@@ -19,10 +19,10 @@
   CONFIGURATION
 ###
 
-Framer.config.displayInDevice =
+Framer.Defaults.displayInDevice =
   enabled: true
   resizeToFit: true
-  containerView: PSD?.Phone
+  containerLayer: Layers?.Phone
   canvasWidth: 640
   canvasHeight: 1136
   deviceWidth: 770
@@ -30,40 +30,41 @@ Framer.config.displayInDevice =
   deviceImage: 'http://shortcuts-for-framer.s3.amazonaws.com/iphone-5s-white.png'
   bobbleImage: 'http://shortcuts-for-framer.s3.amazonaws.com/bobble.png'
 
-Framer.config.defaultAnimation =
-  curve: "spring(700,80,1000)"
-  time: 500
-
-Framer.config.fadeAnimation =
+Framer.Defaults.FadeAnimation =
   curve: "ease-in-out"
   time: 200
 
-Framer.config.slideAnimation =
+Framer.Defaults.SlideAnimation =
   curve: "ease-in-out"
   time: 200
 
 
 
 ###
-  LOOP ON EVERY VIEW
+  LOOP ON EVERY LAYER
 
-  Shorthand for applying a function to every view in the document.
+  Shorthand for applying a function to every layer in the document.
 
   Example:
-  ```Framer.utils.everyView(function(view) {
-    view.visible = false;
+  ```Framer.utils.everyLayer(function(layer) {
+    layer.visible = false;
   });```
 ###
-Framer.utils.everyView = (fn) ->
-  for viewName of PSD
-    _view = PSD[viewName]
-    fn _view
+Framer.utils.everyLayer = (fn) ->
+  for layerName of Layers
+    _layer = Layers[layerName]
+    fn _layer
 
 
 ###
-  SHORTHAND FOR ACCESSING VIEWS
+  SHORTHAND FOR ACCESSING LAYERS
 
-  Convert each view coming from the exporter into a Javascript object for shorthand access.
+  Convert each layer coming from the exporter into a Javascript object for shorthand access.
+
+  This has to be called manually in Framer3 after you've ran the importer.
+
+  myLayers = Framer.Importer.load("...")
+  Framer.Shortcuts.initialize(myLayers)
 
   If you have a layer in your PSD/Sketch called "NewsFeed", this will create a global Javascript variable called "NewsFeed" that you can manipulate with Framer.
 
@@ -73,44 +74,48 @@ Framer.utils.everyView = (fn) ->
   Notes:
   Javascript has some names reserved for internal function that you can't override (for ex. )
 ###
-Framer.utils.everyView (view) ->
-  window[view.name] = view
+Framer.Shortcuts.initialize = (layers) ->
+  if layers.length
+    window.Layers = layers
+
+    Framer.utils.everyLayer (layer) ->
+      window[layer.name] = layer
 
 
 ###
-  FIND CHILD VIEWS BY NAME
+  FIND CHILD LAYERS BY NAME
 
-  Retrieves subviews of selected view that have a matching name.
+  Retrieves subLayers of selected layer that have a matching name.
 
-  getChild: return the first subview whose name includes the given string
-  getChildren: return all subviews that match
+  getChild: return the first sublayer whose name includes the given string
+  getChildren: return all subLayers that match
 
   Useful when eg. iterating over table cells. Use getChild to access the button found in each cell. This is **case insensitive**.
 
   Example:
-  `topView = NewsFeed.getChild("Top")` Looks for view whose name matches Top. Returns the first matching view.
+  `topLayer = NewsFeed.getChild("Top")` Looks for layers whose name matches Top. Returns the first matching layer.
 
-  `childViews = Table.getChildren("Cell")` Returns all children whose name match Cell in an array.
+  `childLayers = Table.getChildren("Cell")` Returns all children whose name match Cell in an array.
 ###
-View::getChild = (needle) ->
+Layer::getChild = (needle) ->
   # Search direct children
-  for k of @subViews
-    subView = @subViews[k]
-    return subView if subView.name.toLowerCase().indexOf(needle.toLowerCase()) isnt -1
+  for k of @subLayers
+    subLayer = @subLayers[k]
+    return subLayer if subLayer.name.toLowerCase().indexOf(needle.toLowerCase()) isnt -1
 
   # Recursively search children of children
-  for k of @subViews
-    subView = @subViews[k]
-    found = subView.getChild(needle)
+  for k of @subLayers
+    subLayer = @subLayers[k]
+    found = subLayer.getChild(needle)
     return found if found
 
 
-View::getChildren = (needle) ->
+Layer::getChildren = (needle) ->
   results = []
 
-  for k of @subViews
-    subView = @subViews[k]
-    results = results.concat subView.getChildren(needle)
+  for k of @subLayers
+    subLayer = @subLayers[k]
+    results = results.concat subLayer.getChildren(needle)
 
   if @name.toLowerCase().indexOf(needle.toLowerCase()) isnt -1
     results.push @
@@ -124,11 +129,11 @@ View::getChildren = (needle) ->
   Converts a number within one range to another range
 
   Example:
-  We want to map the opacity of a view to its x location.
+  We want to map the opacity of a layer to its x location.
 
   The opacity will be 0 if the X coordinate is 0, and it will be 1 if the X coordinate is 640. All the X coordinates in between will result in intermediate values between 0 and 1.
 
-  `myView.opacity = convertRange(0, 640, myView.x, 0, 1)`
+  `myLayer.opacity = convertRange(0, 640, myLayer.x, 0, 1)`
 
   By default, this value might be outside the bounds of NewMin and NewMax if the OldValue is outside OldMin and OldMax. If you want to cap the final value to NewMin and NewMax, set capped to true.
   Make sure NewMin is smaller than NewMax if you're using this. If you need an inverse proportion, try swapping OldMin and OldMax.
@@ -155,26 +160,26 @@ Framer.utils.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, capped) -
 ###
   ORIGINAL FRAME
 
-  Stores the initial location and size of a view in the "originalFrame" attribute, so you can revert to it later on.
+  Stores the initial location and size of a layer in the "originalFrame" attribute, so you can revert to it later on.
 
   Example:
-  The x coordinate of MyView is initially 400 (from the PSD)
+  The x coordinate of MyLayer is initially 400 (from the PSD)
 
-  ```MyView.x = 200; // now we set it to 200.
-  View.x = View.originalFrame.x // now we set it back to its original value, 400.```
+  ```MyLayer.x = 200; // now we set it to 200.
+  MyLayer.x = MyLayer.originalFrame.x // now we set it back to its original value, 400.```
 ###
-Framer.utils.everyView (view) ->
-  view.originalFrame = view.frame
+Framer.utils.everyLayer (layer) ->
+  layer.originalFrame = layer.frame
 
 ###
   SHORTHAND HOVER SYNTAX
 
-  Quickly define functions that should run when I hover over a view, and hover out.
+  Quickly define functions that should run when I hover over a layer, and hover out.
 
   Example:
-  `MyView.hover(function() { OtherView.show() }, function() { OtherView.hide() });`
+  `MyLayer.hover(function() { OtherLayer.show() }, function() { OtherLayer.hide() });`
 ###
-View::hover = (enterFunction, leaveFunction) ->
+Layer::hover = (enterFunction, leaveFunction) ->
   this.on 'mouseenter', enterFunction
   this.on 'mouseleave', leaveFunction
 
@@ -182,12 +187,12 @@ View::hover = (enterFunction, leaveFunction) ->
   SHORTHAND ANIMATION SYNTAX
 
   A shorter animation syntax that mirrors the jQuery syntax:
-  view.animate(properties, [time], [curve], [callback])
+  layer.animate(properties, [time], [curve], [callback])
 
   All parameters except properties are optional and can be omitted.
 
   Old:
-  ```myview.animate({
+  ```MyLayer.animate({
     properties: {
       x: 500
     },
@@ -196,20 +201,20 @@ View::hover = (enterFunction, leaveFunction) ->
   })```
 
   New:
-  ```myview.animateTo({
+  ```MyLayer.animateTo({
     x: 500
   })```
 
-  Optionally (with 1000ms duration):
-    ```myView.animateTo({
+  Optionally (with 1000ms duration and ease-in):
+    ```MyLayer.animateTo({
     x: 500
-  }, 1000)
+  }, 1000, "ease-in")
 ###
 
 
 
-View::animateTo = (properties, first, second, third) ->
-  thisView = this
+Layer::animateTo = (properties, first, second, third) ->
+  thisLayer = this
   time = curve = callback = null
 
   if typeOf(first) == "number"
@@ -224,40 +229,40 @@ View::animateTo = (properties, first, second, third) ->
   else if typeOf(first) == "function"
     callback = first
 
-  thisView.animationTo = new Animation
-    view: thisView
+  thisLayer.animationTo = new Animation
+    layer: thisLayer
     properties: properties
     curve: Framer.config.defaultAnimation.curve
     time: Framer.config.defaultAnimation.time
 
   if time? && !curve?
-    thisView.animationTo.curve = 'ease-in-out'
-    thisView.animationTo.time = time
+    thisLayer.animationTo.curve = 'ease-in-out'
+    thisLayer.animationTo.time = time
 
   if !curve?
-    thisView.animationTo.curve = curve
+    thisLayer.animationTo.curve = curve
 
-  thisView.animationTo.on 'start', ->
-    thisView.isAnimating = true
+  thisLayer.animationTo.on 'start', ->
+    thisLayer.isAnimating = true
 
-  thisView.animationTo.on 'end', ->
-    thisView.isAnimating = null
+  thisLayer.animationTo.on 'end', ->
+    thisLayer.isAnimating = null
     if callback?
       callback()
 
-  thisView.animationTo.start()
+  thisLayer.animationTo.start()
 
 ###
-  ANIMATE MOBILE VIEWS IN AND OUT OF THE VIEWPORT
+  ANIMATE MOBILE LAYERS IN AND OUT OF THE VIEWPORT
 
-  Shorthand syntax for animating views in and out of the viewport. Assumes that the view you are animating is a whole screen and has the same dimensions as your container.
+  Shorthand syntax for animating layers in and out of the viewport. Assumes that the layer you are animating is a whole screen and has the same dimensions as your container.
 
-  To use this, you need to place everything in a parent view called Phone. The library will automatically enable masking and size it to 640 * 1136.
+  To use this, you need to place everything in a parent layer called Phone. The library will automatically enable masking and size it to 640 * 1136.
 
   Example:
-  * `myView.slideToLeft()` will animate the view **to** the left corner of the screen (from its current position)
+  * `MyLayer.slideToLeft()` will animate the layer **to** the left corner of the screen (from its current position)
 
-  * `myView.slideFromLeft()` will animate the view into the viewport **from** the left corner (from x=-width)
+  * `MyLayer.slideFromLeft()` will animate the layer into the viewport **from** the left corner (from x=-width)
 
   Configuration:
   * Framer.config.slideAnimation.time
@@ -269,19 +274,19 @@ View::animateTo = (properties, first, second, third) ->
     property: "x"     // animate along the X axis
     factor: "width"
     from: -1          // start value: outside the left corner ( x = -width_phone )
-    to: 0             // end value: inside the left corner ( x = width_view )
+    to: 0             // end value: inside the left corner ( x = width_layer )
   ```
 ###
 
 _.defer ->
   # Deferred, so if you change the config in your app.js, it's taken into account.
 
-  _phone = Framer.config.displayInDevice.containerView
+  _phone = Framer.Defaults.displayInDevice.containerLayer
   if _phone?
     _phone.x = 0
     _phone.y = 0
-    _phone.width = Framer.config.displayInDevice.canvasWidth
-    _phone.height = Framer.config.displayInDevice.canvasHeight
+    _phone.width = Framer.Defaults.displayInDevice.canvasWidth
+    _phone.height = Framer.Defaults.displayInDevice.canvasHeight
     _phone.clip = true
 
 
@@ -332,12 +337,12 @@ Framer.config.slideAnimations =
 
 
 
-_.each Framer.config.slideAnimations, (opts, name) ->
-  View.prototype[name] = ->
-    _phone = Framer.config.containerView
+_.each Framer.Defaults.slideAnimations, (opts, name) ->
+  Layer.prototype[name] = ->
+    _phone = Framer.Defaults.displayInDevice.containerLayer
 
     unless _phone
-      console.log "Please wrap your project in a view named Phone, or set Framer.config.containerView to whatever your wrapper view is."
+      console.log "Please wrap your project in a layer named Phone, or set Framer.Defaults.displayInDevice.containerLayer to whatever your wrapper layer is."
       return
 
     _property = opts.property
@@ -347,35 +352,35 @@ _.each Framer.config.slideAnimations, (opts, name) ->
       # Initiate the start position of the animation (i.e. off screen on the left corner)
       this[_property] = opts.from * _factor
 
-    # Default animation syntax view.animate({_property: 0}) would try to animate '_property' literally, in order for it to blow up to what's in it (eg x), we use this syntax
+    # Default animation syntax layer.animate({_property: 0}) would try to animate '_property' literally, in order for it to blow up to what's in it (eg x), we use this syntax
     _animationConfig = {}
     _animationConfig[_property] = opts.to * _factor
 
     this.animate
       properties: _animationConfig
-      time: Framer.config.slideAnimation.time
-      curve: Framer.config.slideAnimation.curve
+      time: Framer.Defaults.SlideAnimation.time
+      curve: Framer.Defaults.SlideAnimation.curve
 
 
 
 ###
   EASY FADE IN / FADE OUT
 
-  .show() and .hide() are shortcuts to affect `myView.visible`. They immediately show or hide the view.
+  .show() and .hide() are shortcuts to affect `myLayer.visible`. They immediately show or hide the layer.
 
-  .fadeIn() and .fadeOut() are shortcuts to fade in a hidden view, or fade out a visible view.
+  .fadeIn() and .fadeOut() are shortcuts to fade in a hidden layer, or fade out a visible layer.
 
-  To customize the fade animation, change the variables `Framer.config.defaultFadeAnimation.time` and `defaultFadeAnimation.curve`.
+  To customize the fade animation, change the variables `Framer.Defaults.defaultFadeAnimation.time` and `defaultFadeAnimation.curve`.
 ###
-View::show = ->
+Layer::show = ->
   @visible = true
   @opacity = 1
 
-View::hide = ->
+Layer::hide = ->
   @visible = false
 
 
-View::fadeIn = (time = Framer.config.fadeAnimation.time) ->
+Layer::fadeIn = (time = Framer.Defaults.FadeAnimation.time) ->
   return if @opacity == 1 and @visible
 
   unless @visible
@@ -385,27 +390,27 @@ View::fadeIn = (time = Framer.config.fadeAnimation.time) ->
   @animate
     properties:
       opacity: 1
-    curve: Framer.config.fadeAnimation.curve
+    curve: Framer.Defaults.FadeAnimation.curve
     time: time
 
 
-View::fadeOut = (time = Framer.config.fadeAnimation.time) ->
+Layer::fadeOut = (time = Framer.Defaults.FadeAnimation.time) ->
   return if @opacity == 0 or !@visible
 
   that = @
   @animate
     properties:
       opacity: 0
-    curve: Framer.config.fadeAnimation.curve
+    curve: Framer.Defaults.FadeAnimation.curve
     time: time
     callback: ->
       that.visible = false
 
 
 ###
-  EASY HOVER AND TOUCH/CLICK STATES FOR VIEWS
+  EASY HOVER AND TOUCH/CLICK STATES FOR LAYERS
 
-  By naming your view hierarchy in the following way, you can automatically have your views react to hovers, clicks or taps.
+  By naming your layer hierarchy in the following way, you can automatically have your layers react to hovers, clicks or taps.
 
   Button_touchable
   - Button_default (default state)
@@ -413,30 +418,31 @@ View::fadeOut = (time = Framer.config.fadeAnimation.time) ->
   - Button_hover (hover)
 ###
 
-Framer.utils.everyView (view) ->
-  _default = view.getChild('default')
+Framer.utils.everyLayer (layer) ->
+  _default = layer.getChild('default')
 
-  if view.name.toLowerCase().indexOf('touchable') and _default
+  if layer.name.toLowerCase().indexOf('touchable') and _default
 
     unless utils.isMobile()
-      _hover = view.getChild('hover')
-    _down = view.getChild('down')
+      _hover = layer.getChild('hover')
+    _down = layer.getChild('down')
 
-    # These views should be hidden by default
+    # These layers should be hidden by default
     _hover?.hide()
     _down?.hide()
 
     # Create fake hit target (so we don't re-fire events)
     if _hover or _down
-      hitTarget = new View
+      hitTarget = new Layer
+        background: 'transparent'
         frame: _default.frame
 
-      hitTarget.superView = view
+      hitTarget.superLayer = layer
       hitTarget.bringToFront()
 
     # There is a hover state, so define hover events (not for mobile)
     if _hover
-      view.hover ->
+      layer.hover ->
         _default.hide()
         _hover.show()
       , ->
@@ -445,12 +451,12 @@ Framer.utils.everyView (view) ->
 
     # There is a down state, so define down events
     if _down
-      view.on Events.TouchStart, ->
+      layer.on Events.TouchStart, ->
         _default.hide()
         _hover?.hide() # touch down state overrides hover state
         _down.show()
 
-      view.on Events.TouchEnd, ->
+      layer.on Events.TouchEnd, ->
         _down.hide()
 
         if _hover
@@ -467,42 +473,42 @@ Framer.utils.everyView (view) ->
 
   If you're prototyping a mobile app, showing it in a device can be helpful for presentations.
 
-  Wrapping everything in a top level view (group in Sketch/PS) called "Phone" will enable this mode and wrap the view in an iPhone image.
+  Wrapping everything in a top level layer (group in Sketch/PS) called "Phone" will enable this mode and wrap the layer in an iPhone image.
 ###
 
 class Device
   build: (args) ->
     _.extend(@, args)
 
-    if @enabled && @containerView && !utils.isMobile()
+    if @enabled && @containerLayer && !utils.isMobile()
       @enableCursor()
 
-      @backgroundView = new ImageView
+      @backgroundLayer = new Layer
         x: 0
         y: 0
         width: window.innerWidth
         height: window.innerHeight
         image: @backgroundImage
-      @backgroundView.name = 'BackgroundView'
-      @backgroundView.style.backgroundColor = 'white'
+      @backgroundLayer.name = 'BackgroundLayer'
+      @backgroundLayer.style.backgroundColor = 'white'
 
-      @handView = new ImageView
+      @handLayer = new Layer
         midX: window.innerWidth / 2
         midY: window.innerHeight / 2
         width: @handWidth
         height: @handHeight
         image: @handImage
-      @handView.name = 'HandView'
-      @handView.style.backgroundColor = 'transparent'
-      @handView.superView = @backgroundView
+      @handLayer.name = 'HandLayer'
+      @handLayer.style.backgroundColor = 'transparent'
+      @handLayer.superLayer = @backgroundLayer
 
-      @deviceView = new ImageView
+      @deviceLayer = new Layer
         midX: window.innerWidth / 2
         midY: window.innerHeight / 2
         width: @deviceWidth
         height: @deviceHeight
         image: @deviceImage
-      @deviceView.name = 'DeviceView'
+      @deviceLayer.name = 'DeviceLayer'
 
       window.addEventListener 'resize', =>
         @resize()
@@ -521,51 +527,51 @@ class Device
 
   refresh: ->
     if @enabled
-      @containerView.superView = @deviceView
-      @containerView.midX = @deviceView.width/2
-      @containerView.midY = @deviceView.height/2
-      @backgroundView.show()
-      @deviceView.show()
+      @containerLayer.superLayer = @deviceLayer
+      @containerLayer.midX = @deviceLayer.width/2
+      @containerLayer.midY = @deviceLayer.height/2
+      @backgroundLayer.show()
+      @deviceLayer.show()
     else
-      @containerView.superView = null
-      @containerView.x = 0
-      @containerView.y = 0
-      @backgroundView.hide()
-      @deviceView.hide()
+      @containerLayer.superLayer = null
+      @containerLayer.x = 0
+      @containerLayer.y = 0
+      @backgroundLayer.hide()
+      @deviceLayer.hide()
 
   resize: ->
     # Position background to fill screen
-    @backgroundView.width = window.innerWidth
-    @backgroundView.height = window.innerHeight
+    @backgroundLayer.width = window.innerWidth
+    @backgroundLayer.height = window.innerHeight
 
     # Position device to be centered in background
-    @deviceView.midX = @handView.midX = window.innerWidth/2
+    @deviceLayer.midX = @handLayer.midX = window.innerWidth/2
 
     if @resizeToFit
       # Resize the device to fit screen vertically
-      scaleFactor = window.innerHeight / @deviceView.height * 0.95
-      @deviceView.scale = @handView.scale = scaleFactor
+      scaleFactor = window.innerHeight / @deviceLayer.height * 0.95
+      @deviceLayer.scale = @handLayer.scale = scaleFactor
 
-    if @resizeToFit || window.innerHeight > @deviceView.height
+    if @resizeToFit || window.innerHeight > @deviceLayer.height
       # Device is smaller than window, so vertically center
-      @deviceView.midY = @handView.midY = window.innerHeight/2
+      @deviceLayer.midY = @handLayer.midY = window.innerHeight/2
     else
       # Window is smaller than mock, so align to top
-      @deviceView.y = @handView.y = 0
-      @backgroundView.height = @deviceView.height
+      @deviceLayer.y = @handLayer.y = 0
+      @backgroundLayer.height = @deviceLayer.height
 
 
 Framer.Device = new Device
 _.defer ->
-  Framer.Device.build Framer.config.displayInDevice
+  Framer.Device.build Framer.Defaults.displayInDevice
 
 
 
 ###
   SHORTHAND FOR TAP EVENTS
 
-  Instead of `view.on(Events.TouchEnd, handler)`, use `view.tap(handler)`
+  Instead of `MyLayer.on(Events.TouchEnd, handler)`, use `MyLayer.tap(handler)`
 ###
 
-View::tap = (handler) ->
+Layer::tap = (handler) ->
   this.on Events.TouchEnd, handler

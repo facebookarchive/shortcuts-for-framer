@@ -22,10 +22,10 @@
 (function() {
   var Device;
 
-  Framer.config.displayInDevice = {
+  Framer.Defaults.displayInDevice = {
     enabled: true,
     resizeToFit: true,
-    containerView: typeof PSD !== "undefined" && PSD !== null ? PSD.Phone : void 0,
+    containerLayer: typeof Layers !== "undefined" && Layers !== null ? Layers.Phone : void 0,
     canvasWidth: 640,
     canvasHeight: 1136,
     deviceWidth: 770,
@@ -34,48 +34,48 @@
     bobbleImage: 'http://shortcuts-for-framer.s3.amazonaws.com/bobble.png'
   };
 
-  Framer.config.defaultAnimation = {
-    curve: "spring(700,80,1000)",
-    time: 500
-  };
-
-  Framer.config.fadeAnimation = {
+  Framer.Defaults.FadeAnimation = {
     curve: "ease-in-out",
     time: 200
   };
 
-  Framer.config.slideAnimation = {
+  Framer.Defaults.SlideAnimation = {
     curve: "ease-in-out",
     time: 200
   };
 
   /*
-    LOOP ON EVERY VIEW
+    LOOP ON EVERY LAYER
   
-    Shorthand for applying a function to every view in the document.
+    Shorthand for applying a function to every layer in the document.
   
     Example:
-    ```Framer.utils.everyView(function(view) {
-      view.visible = false;
+    ```Framer.utils.everyLayer(function(layer) {
+      layer.visible = false;
     });```
   */
 
 
-  Framer.utils.everyView = function(fn) {
-    var viewName, _results, _view;
+  Framer.utils.everyLayer = function(fn) {
+    var layerName, _layer, _results;
 
     _results = [];
-    for (viewName in PSD) {
-      _view = PSD[viewName];
-      _results.push(fn(_view));
+    for (layerName in Layers) {
+      _layer = Layers[layerName];
+      _results.push(fn(_layer));
     }
     return _results;
   };
 
   /*
-    SHORTHAND FOR ACCESSING VIEWS
+    SHORTHAND FOR ACCESSING LAYERS
   
-    Convert each view coming from the exporter into a Javascript object for shorthand access.
+    Convert each layer coming from the exporter into a Javascript object for shorthand access.
+  
+    This has to be called manually in Framer3 after you've ran the importer.
+  
+    myLayers = Framer.Importer.load("...")
+    Framer.Shortcuts.initialize(myLayers)
   
     If you have a layer in your PSD/Sketch called "NewsFeed", this will create a global Javascript variable called "NewsFeed" that you can manipulate with Framer.
   
@@ -87,52 +87,57 @@
   */
 
 
-  Framer.utils.everyView(function(view) {
-    return window[view.name] = view;
-  });
+  Framer.Shortcuts.initialize = function(layers) {
+    if (layers.length) {
+      window.Layers = layers;
+      return Framer.utils.everyLayer(function(layer) {
+        return window[layer.name] = layer;
+      });
+    }
+  };
 
   /*
-    FIND CHILD VIEWS BY NAME
+    FIND CHILD LAYERS BY NAME
   
-    Retrieves subviews of selected view that have a matching name.
+    Retrieves subLayers of selected layer that have a matching name.
   
-    getChild: return the first subview whose name includes the given string
-    getChildren: return all subviews that match
+    getChild: return the first sublayer whose name includes the given string
+    getChildren: return all subLayers that match
   
     Useful when eg. iterating over table cells. Use getChild to access the button found in each cell. This is **case insensitive**.
   
     Example:
-    `topView = NewsFeed.getChild("Top")` Looks for view whose name matches Top. Returns the first matching view.
+    `topLayer = NewsFeed.getChild("Top")` Looks for layers whose name matches Top. Returns the first matching layer.
   
-    `childViews = Table.getChildren("Cell")` Returns all children whose name match Cell in an array.
+    `childLayers = Table.getChildren("Cell")` Returns all children whose name match Cell in an array.
   */
 
 
-  View.prototype.getChild = function(needle) {
-    var found, k, subView;
+  Layer.prototype.getChild = function(needle) {
+    var found, k, subLayer;
 
-    for (k in this.subViews) {
-      subView = this.subViews[k];
-      if (subView.name.toLowerCase().indexOf(needle.toLowerCase()) !== -1) {
-        return subView;
+    for (k in this.subLayers) {
+      subLayer = this.subLayers[k];
+      if (subLayer.name.toLowerCase().indexOf(needle.toLowerCase()) !== -1) {
+        return subLayer;
       }
     }
-    for (k in this.subViews) {
-      subView = this.subViews[k];
-      found = subView.getChild(needle);
+    for (k in this.subLayers) {
+      subLayer = this.subLayers[k];
+      found = subLayer.getChild(needle);
       if (found) {
         return found;
       }
     }
   };
 
-  View.prototype.getChildren = function(needle) {
-    var k, results, subView;
+  Layer.prototype.getChildren = function(needle) {
+    var k, results, subLayer;
 
     results = [];
-    for (k in this.subViews) {
-      subView = this.subViews[k];
-      results = results.concat(subView.getChildren(needle));
+    for (k in this.subLayers) {
+      subLayer = this.subLayers[k];
+      results = results.concat(subLayer.getChildren(needle));
     }
     if (this.name.toLowerCase().indexOf(needle.toLowerCase()) !== -1) {
       results.push(this);
@@ -146,11 +151,11 @@
     Converts a number within one range to another range
   
     Example:
-    We want to map the opacity of a view to its x location.
+    We want to map the opacity of a layer to its x location.
   
     The opacity will be 0 if the X coordinate is 0, and it will be 1 if the X coordinate is 640. All the X coordinates in between will result in intermediate values between 0 and 1.
   
-    `myView.opacity = convertRange(0, 640, myView.x, 0, 1)`
+    `myLayer.opacity = convertRange(0, 640, myLayer.x, 0, 1)`
   
     By default, this value might be outside the bounds of NewMin and NewMax if the OldValue is outside OldMin and OldMax. If you want to cap the final value to NewMin and NewMax, set capped to true.
     Make sure NewMin is smaller than NewMax if you're using this. If you need an inverse proportion, try swapping OldMin and OldMax.
@@ -179,31 +184,31 @@
   /*
     ORIGINAL FRAME
   
-    Stores the initial location and size of a view in the "originalFrame" attribute, so you can revert to it later on.
+    Stores the initial location and size of a layer in the "originalFrame" attribute, so you can revert to it later on.
   
     Example:
-    The x coordinate of MyView is initially 400 (from the PSD)
+    The x coordinate of MyLayer is initially 400 (from the PSD)
   
-    ```MyView.x = 200; // now we set it to 200.
-    View.x = View.originalFrame.x // now we set it back to its original value, 400.```
+    ```MyLayer.x = 200; // now we set it to 200.
+    MyLayer.x = MyLayer.originalFrame.x // now we set it back to its original value, 400.```
   */
 
 
-  Framer.utils.everyView(function(view) {
-    return view.originalFrame = view.frame;
+  Framer.utils.everyLayer(function(layer) {
+    return layer.originalFrame = layer.frame;
   });
 
   /*
     SHORTHAND HOVER SYNTAX
   
-    Quickly define functions that should run when I hover over a view, and hover out.
+    Quickly define functions that should run when I hover over a layer, and hover out.
   
     Example:
-    `MyView.hover(function() { OtherView.show() }, function() { OtherView.hide() });`
+    `MyLayer.hover(function() { OtherLayer.show() }, function() { OtherLayer.hide() });`
   */
 
 
-  View.prototype.hover = function(enterFunction, leaveFunction) {
+  Layer.prototype.hover = function(enterFunction, leaveFunction) {
     this.on('mouseenter', enterFunction);
     return this.on('mouseleave', leaveFunction);
   };
@@ -212,12 +217,12 @@
     SHORTHAND ANIMATION SYNTAX
   
     A shorter animation syntax that mirrors the jQuery syntax:
-    view.animate(properties, [time], [curve], [callback])
+    layer.animate(properties, [time], [curve], [callback])
   
     All parameters except properties are optional and can be omitted.
   
     Old:
-    ```myview.animate({
+    ```MyLayer.animate({
       properties: {
         x: 500
       },
@@ -226,21 +231,21 @@
     })```
   
     New:
-    ```myview.animateTo({
+    ```MyLayer.animateTo({
       x: 500
     })```
   
-    Optionally (with 1000ms duration):
-      ```myView.animateTo({
+    Optionally (with 1000ms duration and ease-in):
+      ```MyLayer.animateTo({
       x: 500
-    }, 1000)
+    }, 1000, "ease-in")
   */
 
 
-  View.prototype.animateTo = function(properties, first, second, third) {
-    var callback, curve, thisView, time;
+  Layer.prototype.animateTo = function(properties, first, second, third) {
+    var callback, curve, thisLayer, time;
 
-    thisView = this;
+    thisLayer = this;
     time = curve = callback = null;
     if (typeOf(first) === "number") {
       time = first;
@@ -259,42 +264,42 @@
     } else if (typeOf(first) === "function") {
       callback = first;
     }
-    thisView.animationTo = new Animation({
-      view: thisView,
+    thisLayer.animationTo = new Animation({
+      layer: thisLayer,
       properties: properties,
       curve: Framer.config.defaultAnimation.curve,
       time: Framer.config.defaultAnimation.time
     });
     if ((time != null) && (curve == null)) {
-      thisView.animationTo.curve = 'ease-in-out';
-      thisView.animationTo.time = time;
+      thisLayer.animationTo.curve = 'ease-in-out';
+      thisLayer.animationTo.time = time;
     }
     if (curve == null) {
-      thisView.animationTo.curve = curve;
+      thisLayer.animationTo.curve = curve;
     }
-    thisView.animationTo.on('start', function() {
-      return thisView.isAnimating = true;
+    thisLayer.animationTo.on('start', function() {
+      return thisLayer.isAnimating = true;
     });
-    thisView.animationTo.on('end', function() {
-      thisView.isAnimating = null;
+    thisLayer.animationTo.on('end', function() {
+      thisLayer.isAnimating = null;
       if (callback != null) {
         return callback();
       }
     });
-    return thisView.animationTo.start();
+    return thisLayer.animationTo.start();
   };
 
   /*
-    ANIMATE MOBILE VIEWS IN AND OUT OF THE VIEWPORT
+    ANIMATE MOBILE LAYERS IN AND OUT OF THE VIEWPORT
   
-    Shorthand syntax for animating views in and out of the viewport. Assumes that the view you are animating is a whole screen and has the same dimensions as your container.
+    Shorthand syntax for animating layers in and out of the viewport. Assumes that the layer you are animating is a whole screen and has the same dimensions as your container.
   
-    To use this, you need to place everything in a parent view called Phone. The library will automatically enable masking and size it to 640 * 1136.
+    To use this, you need to place everything in a parent layer called Phone. The library will automatically enable masking and size it to 640 * 1136.
   
     Example:
-    * `myView.slideToLeft()` will animate the view **to** the left corner of the screen (from its current position)
+    * `MyLayer.slideToLeft()` will animate the layer **to** the left corner of the screen (from its current position)
   
-    * `myView.slideFromLeft()` will animate the view into the viewport **from** the left corner (from x=-width)
+    * `MyLayer.slideFromLeft()` will animate the layer into the viewport **from** the left corner (from x=-width)
   
     Configuration:
     * Framer.config.slideAnimation.time
@@ -306,7 +311,7 @@
       property: "x"     // animate along the X axis
       factor: "width"
       from: -1          // start value: outside the left corner ( x = -width_phone )
-      to: 0             // end value: inside the left corner ( x = width_view )
+      to: 0             // end value: inside the left corner ( x = width_layer )
     ```
   */
 
@@ -314,12 +319,12 @@
   _.defer(function() {
     var _phone;
 
-    _phone = Framer.config.displayInDevice.containerView;
+    _phone = Framer.Defaults.displayInDevice.containerLayer;
     if (_phone != null) {
       _phone.x = 0;
       _phone.y = 0;
-      _phone.width = Framer.config.displayInDevice.canvasWidth;
-      _phone.height = Framer.config.displayInDevice.canvasHeight;
+      _phone.width = Framer.Defaults.displayInDevice.canvasWidth;
+      _phone.height = Framer.Defaults.displayInDevice.canvasHeight;
       return _phone.clip = true;
     }
   });
@@ -371,13 +376,13 @@
     }
   };
 
-  _.each(Framer.config.slideAnimations, function(opts, name) {
-    return View.prototype[name] = function() {
+  _.each(Framer.Defaults.slideAnimations, function(opts, name) {
+    return Layer.prototype[name] = function() {
       var _animationConfig, _factor, _phone, _property;
 
-      _phone = Framer.config.containerView;
+      _phone = Framer.Defaults.displayInDevice.containerLayer;
       if (!_phone) {
-        console.log("Please wrap your project in a view named Phone, or set Framer.config.containerView to whatever your wrapper view is.");
+        console.log("Please wrap your project in a layer named Phone, or set Framer.Defaults.displayInDevice.containerLayer to whatever your wrapper layer is.");
         return;
       }
       _property = opts.property;
@@ -389,8 +394,8 @@
       _animationConfig[_property] = opts.to * _factor;
       return this.animate({
         properties: _animationConfig,
-        time: Framer.config.slideAnimation.time,
-        curve: Framer.config.slideAnimation.curve
+        time: Framer.Defaults.SlideAnimation.time,
+        curve: Framer.Defaults.SlideAnimation.curve
       });
     };
   });
@@ -398,26 +403,26 @@
   /*
     EASY FADE IN / FADE OUT
   
-    .show() and .hide() are shortcuts to affect `myView.visible`. They immediately show or hide the view.
+    .show() and .hide() are shortcuts to affect `myLayer.visible`. They immediately show or hide the layer.
   
-    .fadeIn() and .fadeOut() are shortcuts to fade in a hidden view, or fade out a visible view.
+    .fadeIn() and .fadeOut() are shortcuts to fade in a hidden layer, or fade out a visible layer.
   
-    To customize the fade animation, change the variables `Framer.config.defaultFadeAnimation.time` and `defaultFadeAnimation.curve`.
+    To customize the fade animation, change the variables `Framer.Defaults.defaultFadeAnimation.time` and `defaultFadeAnimation.curve`.
   */
 
 
-  View.prototype.show = function() {
+  Layer.prototype.show = function() {
     this.visible = true;
     return this.opacity = 1;
   };
 
-  View.prototype.hide = function() {
+  Layer.prototype.hide = function() {
     return this.visible = false;
   };
 
-  View.prototype.fadeIn = function(time) {
+  Layer.prototype.fadeIn = function(time) {
     if (time == null) {
-      time = Framer.config.fadeAnimation.time;
+      time = Framer.Defaults.FadeAnimation.time;
     }
     if (this.opacity === 1 && this.visible) {
       return;
@@ -430,16 +435,16 @@
       properties: {
         opacity: 1
       },
-      curve: Framer.config.fadeAnimation.curve,
+      curve: Framer.Defaults.FadeAnimation.curve,
       time: time
     });
   };
 
-  View.prototype.fadeOut = function(time) {
+  Layer.prototype.fadeOut = function(time) {
     var that;
 
     if (time == null) {
-      time = Framer.config.fadeAnimation.time;
+      time = Framer.Defaults.FadeAnimation.time;
     }
     if (this.opacity === 0 || !this.visible) {
       return;
@@ -449,7 +454,7 @@
       properties: {
         opacity: 0
       },
-      curve: Framer.config.fadeAnimation.curve,
+      curve: Framer.Defaults.FadeAnimation.curve,
       time: time,
       callback: function() {
         return that.visible = false;
@@ -458,9 +463,9 @@
   };
 
   /*
-    EASY HOVER AND TOUCH/CLICK STATES FOR VIEWS
+    EASY HOVER AND TOUCH/CLICK STATES FOR LAYERS
   
-    By naming your view hierarchy in the following way, you can automatically have your views react to hovers, clicks or taps.
+    By naming your layer hierarchy in the following way, you can automatically have your layers react to hovers, clicks or taps.
   
     Button_touchable
     - Button_default (default state)
@@ -469,15 +474,15 @@
   */
 
 
-  Framer.utils.everyView(function(view) {
+  Framer.utils.everyLayer(function(layer) {
     var hitTarget, _default, _down, _hover;
 
-    _default = view.getChild('default');
-    if (view.name.toLowerCase().indexOf('touchable') && _default) {
+    _default = layer.getChild('default');
+    if (layer.name.toLowerCase().indexOf('touchable') && _default) {
       if (!utils.isMobile()) {
-        _hover = view.getChild('hover');
+        _hover = layer.getChild('hover');
       }
-      _down = view.getChild('down');
+      _down = layer.getChild('down');
       if (_hover != null) {
         _hover.hide();
       }
@@ -485,14 +490,15 @@
         _down.hide();
       }
       if (_hover || _down) {
-        hitTarget = new View({
+        hitTarget = new Layer({
+          background: 'transparent',
           frame: _default.frame
         });
-        hitTarget.superView = view;
+        hitTarget.superLayer = layer;
         hitTarget.bringToFront();
       }
       if (_hover) {
-        view.hover(function() {
+        layer.hover(function() {
           _default.hide();
           return _hover.show();
         }, function() {
@@ -501,14 +507,14 @@
         });
       }
       if (_down) {
-        view.on(Events.TouchStart, function() {
+        layer.on(Events.TouchStart, function() {
           _default.hide();
           if (_hover != null) {
             _hover.hide();
           }
           return _down.show();
         });
-        return view.on(Events.TouchEnd, function() {
+        return layer.on(Events.TouchEnd, function() {
           _down.hide();
           if (_hover) {
             return _hover.show();
@@ -525,7 +531,7 @@
   
     If you're prototyping a mobile app, showing it in a device can be helpful for presentations.
   
-    Wrapping everything in a top level view (group in Sketch/PS) called "Phone" will enable this mode and wrap the view in an iPhone image.
+    Wrapping everything in a top level layer (group in Sketch/PS) called "Phone" will enable this mode and wrap the layer in an iPhone image.
   */
 
 
@@ -536,35 +542,35 @@
       var _this = this;
 
       _.extend(this, args);
-      if (this.enabled && this.containerView && !utils.isMobile()) {
+      if (this.enabled && this.containerLayer && !utils.isMobile()) {
         this.enableCursor();
-        this.backgroundView = new ImageView({
+        this.backgroundLayer = new Layer({
           x: 0,
           y: 0,
           width: window.innerWidth,
           height: window.innerHeight,
           image: this.backgroundImage
         });
-        this.backgroundView.name = 'BackgroundView';
-        this.backgroundView.style.backgroundColor = 'white';
-        this.handView = new ImageView({
+        this.backgroundLayer.name = 'BackgroundLayer';
+        this.backgroundLayer.style.backgroundColor = 'white';
+        this.handLayer = new Layer({
           midX: window.innerWidth / 2,
           midY: window.innerHeight / 2,
           width: this.handWidth,
           height: this.handHeight,
           image: this.handImage
         });
-        this.handView.name = 'HandView';
-        this.handView.style.backgroundColor = 'transparent';
-        this.handView.superView = this.backgroundView;
-        this.deviceView = new ImageView({
+        this.handLayer.name = 'HandLayer';
+        this.handLayer.style.backgroundColor = 'transparent';
+        this.handLayer.superLayer = this.backgroundLayer;
+        this.deviceLayer = new Layer({
           midX: window.innerWidth / 2,
           midY: window.innerHeight / 2,
           width: this.deviceWidth,
           height: this.deviceHeight,
           image: this.deviceImage
         });
-        this.deviceView.name = 'DeviceView';
+        this.deviceLayer.name = 'DeviceLayer';
         window.addEventListener('resize', function() {
           return _this.resize();
         });
@@ -585,35 +591,35 @@
 
     Device.prototype.refresh = function() {
       if (this.enabled) {
-        this.containerView.superView = this.deviceView;
-        this.containerView.midX = this.deviceView.width / 2;
-        this.containerView.midY = this.deviceView.height / 2;
-        this.backgroundView.show();
-        return this.deviceView.show();
+        this.containerLayer.superLayer = this.deviceLayer;
+        this.containerLayer.midX = this.deviceLayer.width / 2;
+        this.containerLayer.midY = this.deviceLayer.height / 2;
+        this.backgroundLayer.show();
+        return this.deviceLayer.show();
       } else {
-        this.containerView.superView = null;
-        this.containerView.x = 0;
-        this.containerView.y = 0;
-        this.backgroundView.hide();
-        return this.deviceView.hide();
+        this.containerLayer.superLayer = null;
+        this.containerLayer.x = 0;
+        this.containerLayer.y = 0;
+        this.backgroundLayer.hide();
+        return this.deviceLayer.hide();
       }
     };
 
     Device.prototype.resize = function() {
       var scaleFactor;
 
-      this.backgroundView.width = window.innerWidth;
-      this.backgroundView.height = window.innerHeight;
-      this.deviceView.midX = this.handView.midX = window.innerWidth / 2;
+      this.backgroundLayer.width = window.innerWidth;
+      this.backgroundLayer.height = window.innerHeight;
+      this.deviceLayer.midX = this.handLayer.midX = window.innerWidth / 2;
       if (this.resizeToFit) {
-        scaleFactor = window.innerHeight / this.deviceView.height * 0.95;
-        this.deviceView.scale = this.handView.scale = scaleFactor;
+        scaleFactor = window.innerHeight / this.deviceLayer.height * 0.95;
+        this.deviceLayer.scale = this.handLayer.scale = scaleFactor;
       }
-      if (this.resizeToFit || window.innerHeight > this.deviceView.height) {
-        return this.deviceView.midY = this.handView.midY = window.innerHeight / 2;
+      if (this.resizeToFit || window.innerHeight > this.deviceLayer.height) {
+        return this.deviceLayer.midY = this.handLayer.midY = window.innerHeight / 2;
       } else {
-        this.deviceView.y = this.handView.y = 0;
-        return this.backgroundView.height = this.deviceView.height;
+        this.deviceLayer.y = this.handLayer.y = 0;
+        return this.backgroundLayer.height = this.deviceLayer.height;
       }
     };
 
@@ -624,17 +630,17 @@
   Framer.Device = new Device;
 
   _.defer(function() {
-    return Framer.Device.build(Framer.config.displayInDevice);
+    return Framer.Device.build(Framer.Defaults.displayInDevice);
   });
 
   /*
     SHORTHAND FOR TAP EVENTS
   
-    Instead of `view.on(Events.TouchEnd, handler)`, use `view.tap(handler)`
+    Instead of `MyLayer.on(Events.TouchEnd, handler)`, use `MyLayer.tap(handler)`
   */
 
 
-  View.prototype.tap = function(handler) {
+  Layer.prototype.tap = function(handler) {
     return this.on(Events.TouchEnd, handler);
   };
 
