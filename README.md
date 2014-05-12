@@ -37,4 +37,4 @@ Include `library.js` right before `app.js` in your Framer `index.html` file.
 
 # Questions
 
-Reach out to [@gem_ray](https://twitter.com/gem_ray) on Twitter.
+Feel free to contact the project's maintainer, Cemre Gungor, on gem-at-fb-dot-com or [@gem_ray](https://twitter.com/gem_ray) on Twitter.
