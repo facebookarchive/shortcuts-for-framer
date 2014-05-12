@@ -1,6 +1,6 @@
 # Shortcuts for Framer
 
-A collection of useful functions to make mobile prototyping with Framer easier.  For full reference, check our annotated source code in `library.coffee`.
+A collection of useful functions to make mobile prototyping with [Framer](http://www.framerjs.com/) easier.  For full reference, check our annotated source code in `library.coffee`.
 
 # How to use
 
