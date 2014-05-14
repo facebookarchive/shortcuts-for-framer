@@ -455,13 +455,9 @@
       this.opacity = 0;
       this.visible = true;
     }
-    return this.animate({
-      properties: {
-        opacity: 1
-      },
-      curve: Framer.Defaults.FadeAnimation.curve,
-      time: time
-    });
+    return this.animateTo({
+      opacity: 1
+    }, Framer.Defaults.FadeAnimation.curve, time);
   };
 
   Layer.prototype.fadeOut = function(time) {
@@ -474,15 +470,10 @@
       return;
     }
     that = this;
-    return this.animate({
-      properties: {
-        opacity: 0
-      },
-      curve: Framer.Defaults.FadeAnimation.curve,
-      time: time,
-      callback: function() {
-        return that.style.pointerEvents = 'none';
-      }
+    return this.animateTo({
+      opacity: 0
+    }, Framer.Defaults.FadeAnimation.curve, time, function() {
+      return that.style.pointerEvents = 'none';
     });
   };
 

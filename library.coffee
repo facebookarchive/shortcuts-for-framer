@@ -408,24 +408,14 @@ Layer::fadeIn = (time = Framer.Defaults.FadeAnimation.time) ->
     @opacity = 0
     @visible = true
 
-  @animate
-    properties:
-      opacity: 1
-    curve: Framer.Defaults.FadeAnimation.curve
-    time: time
+  @animateTo opacity: 1, Framer.Defaults.FadeAnimation.curve, time
 
 
 Layer::fadeOut = (time = Framer.Defaults.FadeAnimation.time) ->
   return if @opacity == 0
 
   that = @
-  @animate
-    properties:
-      opacity: 0
-    curve: Framer.Defaults.FadeAnimation.curve
-    time: time
-    callback: ->
-      that.style.pointerEvents = 'none'
+  @animateTo opacity: 0, Framer.Defaults.FadeAnimation.curve, time, -> that.style.pointerEvents = 'none'
 
 
 ###
