@@ -22,6 +22,8 @@
 (function() {
   var Device;
 
+  Framer.Shortcuts = {};
+
   Framer.Defaults.displayInDevice = {
     enabled: true,
     resizeToFit: true,
@@ -36,12 +38,12 @@
 
   Framer.Defaults.FadeAnimation = {
     curve: "ease-in-out",
-    time: 200
+    time: 0.2
   };
 
   Framer.Defaults.SlideAnimation = {
     curve: "ease-in-out",
-    time: 200
+    time: 0.2
   };
 
   /*
@@ -50,18 +52,18 @@
     Shorthand for applying a function to every layer in the document.
   
     Example:
-    ```Framer.utils.everyLayer(function(layer) {
+    ```Framer.Shortcuts.everyLayer(function(layer) {
       layer.visible = false;
     });```
   */
 
 
-  Framer.utils.everyLayer = function(fn) {
+  Framer.Shortcuts.everyLayer = function(fn) {
     var layerName, _layer, _results;
 
     _results = [];
-    for (layerName in Layers) {
-      _layer = Layers[layerName];
+    for (layerName in window.Layers) {
+      _layer = window.Layers[layerName];
       _results.push(fn(_layer));
     }
     return _results;
@@ -88,9 +90,9 @@
 
 
   Framer.Shortcuts.initialize = function(layers) {
-    if (layers.length) {
+    if (layers != null) {
       window.Layers = layers;
-      return Framer.utils.everyLayer(function(layer) {
+      return Framer.Shortcuts.everyLayer(function(layer) {
         return window[layer.name] = layer;
       });
     }
@@ -162,22 +164,22 @@
   */
 
 
-  Framer.utils.convertRange = function(OldMin, OldMax, OldValue, NewMin, NewMax, capped) {
-    var NewRange, OldRange, newValue;
+  Framer.Shortcuts.convertRange = function(OldMin, OldMax, OldValue, NewMin, NewMax, capped) {
+    var NewRange, NewValue, OldRange;
 
     OldRange = OldMax - OldMin;
     NewRange = NewMax - NewMin;
-    newValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin;
+    NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin;
     if (capped) {
       if (NewValue > NewMax) {
-        return newMax;
+        return NewMax;
       } else if (NewValue < NewMin) {
-        return newMin;
+        return NewMin;
       } else {
         return NewValue;
       }
     } else {
-      return newValue;
+      return NewValue;
     }
   };
 
@@ -194,7 +196,7 @@
   */
 
 
-  Framer.utils.everyLayer(function(layer) {
+  Framer.Shortcuts.everyLayer(function(layer) {
     return layer.originalFrame = layer.frame;
   });
 
@@ -211,6 +213,28 @@
   Layer.prototype.hover = function(enterFunction, leaveFunction) {
     this.on('mouseenter', enterFunction);
     return this.on('mouseleave', leaveFunction);
+  };
+
+  /*
+    SHORTHAND TAP SYNTAX
+  
+    Instead of `MyLayer.on(Events.TouchEnd, handler)`, use `MyLayer.tap(handler)`
+  */
+
+
+  Layer.prototype.tap = function(handler) {
+    return this.on(Events.TouchEnd, handler);
+  };
+
+  /*
+    SHORTHAND CLICK SYNTAX
+  
+    Instead of `MyLayer.on(Events.Click, handler)`, use `MyLayer.click(handler)`
+  */
+
+
+  Layer.prototype.tap = function(handler) {
+    return this.on(Events.Click, handler);
   };
 
   /*
@@ -247,34 +271,34 @@
 
     thisLayer = this;
     time = curve = callback = null;
-    if (typeOf(first) === "number") {
+    if (typeof first === "number") {
       time = first;
-      if (typeOf(second) === "string") {
+      if (typeof second === "string") {
         curve = second;
         callback = third;
       }
-      if (typeOf(second) === "function") {
+      if (typeof second === "function") {
         callback = second;
       }
-    } else if (typeOf(first) === "string") {
+    } else if (typeof first === "string") {
       curve = first;
-      if (typeOf(second) === "function") {
+      if (typeof second === "function") {
         callback = second;
       }
-    } else if (typeOf(first) === "function") {
+    } else if (typeof first === "function") {
       callback = first;
     }
     thisLayer.animationTo = new Animation({
       layer: thisLayer,
       properties: properties,
-      curve: Framer.config.defaultAnimation.curve,
-      time: Framer.config.defaultAnimation.time
+      curve: Framer.Defaults.Animation.curve,
+      time: Framer.Defaults.Animation.time
     });
     if ((time != null) && (curve == null)) {
       thisLayer.animationTo.curve = 'ease-in-out';
       thisLayer.animationTo.time = time;
     }
-    if (curve == null) {
+    if (curve != null) {
       thisLayer.animationTo.curve = curve;
     }
     thisLayer.animationTo.on('start', function() {
@@ -302,8 +326,8 @@
     * `MyLayer.slideFromLeft()` will animate the layer into the viewport **from** the left corner (from x=-width)
   
     Configuration:
-    * Framer.config.slideAnimation.time
-    * Framer.config.slideAnimation.curve
+    * Framer.Defaults.SlideAnimation.time
+    * Framer.Defaults.SlideAnimation.curve
   
   
     How to read the configuration:
@@ -329,7 +353,7 @@
     }
   });
 
-  Framer.config.slideAnimations = {
+  Framer.Shortcuts.slideAnimations = {
     slideFromLeft: {
       property: "x",
       factor: "width",
@@ -412,19 +436,19 @@
 
 
   Layer.prototype.show = function() {
-    this.visible = true;
     return this.opacity = 1;
   };
 
   Layer.prototype.hide = function() {
-    return this.visible = false;
+    this.opacity = 1;
+    return this.style.pointerEvents = 'none';
   };
 
   Layer.prototype.fadeIn = function(time) {
     if (time == null) {
       time = Framer.Defaults.FadeAnimation.time;
     }
-    if (this.opacity === 1 && this.visible) {
+    if (this.opacity === 1) {
       return;
     }
     if (!this.visible) {
@@ -446,7 +470,7 @@
     if (time == null) {
       time = Framer.Defaults.FadeAnimation.time;
     }
-    if (this.opacity === 0 || !this.visible) {
+    if (this.opacity === 0) {
       return;
     }
     that = this;
@@ -457,7 +481,7 @@
       curve: Framer.Defaults.FadeAnimation.curve,
       time: time,
       callback: function() {
-        return that.visible = false;
+        return that.style.pointerEvents = 'none';
       }
     });
   };
@@ -474,12 +498,12 @@
   */
 
 
-  Framer.utils.everyLayer(function(layer) {
+  Framer.Shortcuts.everyLayer(function(layer) {
     var hitTarget, _default, _down, _hover;
 
     _default = layer.getChild('default');
     if (layer.name.toLowerCase().indexOf('touchable') && _default) {
-      if (!utils.isMobile()) {
+      if (!Framer.Utils.isMobile()) {
         _hover = layer.getChild('hover');
       }
       _down = layer.getChild('down');
@@ -542,26 +566,27 @@
       var _this = this;
 
       _.extend(this, args);
-      if (this.enabled && this.containerLayer && !utils.isMobile()) {
+      if (this.enabled && this.containerLayer && !Framer.Utils.isMobile()) {
         this.enableCursor();
         this.backgroundLayer = new Layer({
           x: 0,
           y: 0,
           width: window.innerWidth,
           height: window.innerHeight,
-          image: this.backgroundImage
+          image: this.backgroundImage,
+          backgroundColor: 'white'
         });
         this.backgroundLayer.name = 'BackgroundLayer';
-        this.backgroundLayer.style.backgroundColor = 'white';
+        this.backgroundLayer.style;
         this.handLayer = new Layer({
           midX: window.innerWidth / 2,
           midY: window.innerHeight / 2,
           width: this.handWidth,
           height: this.handHeight,
-          image: this.handImage
+          image: this.handImage,
+          backgroundColor: 'transparent'
         });
         this.handLayer.name = 'HandLayer';
-        this.handLayer.style.backgroundColor = 'transparent';
         this.handLayer.superLayer = this.backgroundLayer;
         this.deviceLayer = new Layer({
           midX: window.innerWidth / 2,
@@ -586,7 +611,7 @@
     };
 
     Device.prototype.enableCursor = function() {
-      return document.body.style.cursor = "url(" + Framer.config.displayInDevice.bobbleImage + ") 32 32, default";
+      return document.body.style.cursor = "url(" + Framer.Defaults.displayInDevice.bobbleImage + ") 32 32, default";
     };
 
     Device.prototype.refresh = function() {
@@ -632,16 +657,5 @@
   _.defer(function() {
     return Framer.Device.build(Framer.Defaults.displayInDevice);
   });
-
-  /*
-    SHORTHAND FOR TAP EVENTS
-  
-    Instead of `MyLayer.on(Events.TouchEnd, handler)`, use `MyLayer.tap(handler)`
-  */
-
-
-  Layer.prototype.tap = function(handler) {
-    return this.on(Events.TouchEnd, handler);
-  };
 
 }).call(this);

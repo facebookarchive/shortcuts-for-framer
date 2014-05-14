@@ -19,6 +19,8 @@
   CONFIGURATION
 ###
 
+Framer.Shortcuts = {}
+
 Framer.Defaults.displayInDevice =
   enabled: true
   resizeToFit: true
@@ -32,11 +34,11 @@ Framer.Defaults.displayInDevice =
 
 Framer.Defaults.FadeAnimation =
   curve: "ease-in-out"
-  time: 200
+  time: 0.2
 
 Framer.Defaults.SlideAnimation =
   curve: "ease-in-out"
-  time: 200
+  time: 0.2
 
 
 
@@ -46,13 +48,13 @@ Framer.Defaults.SlideAnimation =
   Shorthand for applying a function to every layer in the document.
 
   Example:
-  ```Framer.utils.everyLayer(function(layer) {
+  ```Framer.Shortcuts.everyLayer(function(layer) {
     layer.visible = false;
   });```
 ###
-Framer.utils.everyLayer = (fn) ->
-  for layerName of Layers
-    _layer = Layers[layerName]
+Framer.Shortcuts.everyLayer = (fn) ->
+  for layerName of window.Layers
+    _layer = window.Layers[layerName]
     fn _layer
 
 
@@ -75,10 +77,10 @@ Framer.utils.everyLayer = (fn) ->
   Javascript has some names reserved for internal function that you can't override (for ex. )
 ###
 Framer.Shortcuts.initialize = (layers) ->
-  if layers.length
+  if layers?
     window.Layers = layers
 
-    Framer.utils.everyLayer (layer) ->
+    Framer.Shortcuts.everyLayer (layer) ->
       window[layer.name] = layer
 
 
@@ -138,23 +140,20 @@ Layer::getChildren = (needle) ->
   By default, this value might be outside the bounds of NewMin and NewMax if the OldValue is outside OldMin and OldMax. If you want to cap the final value to NewMin and NewMax, set capped to true.
   Make sure NewMin is smaller than NewMax if you're using this. If you need an inverse proportion, try swapping OldMin and OldMax.
 ###
-Framer.utils.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, capped) ->
+Framer.Shortcuts.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, capped) ->
   OldRange = (OldMax - OldMin)
   NewRange = (NewMax - NewMin)
-  newValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
+  NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
 
   if capped
     if NewValue > NewMax
-      newMax
+      NewMax
     else if NewValue < NewMin
-      newMin
+      NewMin
     else
       NewValue
   else
-    newValue
-
-
-
+    NewValue
 
 
 ###
@@ -168,7 +167,7 @@ Framer.utils.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, capped) -
   ```MyLayer.x = 200; // now we set it to 200.
   MyLayer.x = MyLayer.originalFrame.x // now we set it back to its original value, 400.```
 ###
-Framer.utils.everyLayer (layer) ->
+Framer.Shortcuts.everyLayer (layer) ->
   layer.originalFrame = layer.frame
 
 ###
@@ -182,6 +181,28 @@ Framer.utils.everyLayer (layer) ->
 Layer::hover = (enterFunction, leaveFunction) ->
   this.on 'mouseenter', enterFunction
   this.on 'mouseleave', leaveFunction
+
+
+###
+  SHORTHAND TAP SYNTAX
+
+  Instead of `MyLayer.on(Events.TouchEnd, handler)`, use `MyLayer.tap(handler)`
+###
+
+Layer::tap = (handler) ->
+  this.on Events.TouchEnd, handler
+
+
+###
+  SHORTHAND CLICK SYNTAX
+
+  Instead of `MyLayer.on(Events.Click, handler)`, use `MyLayer.click(handler)`
+###
+
+Layer::tap = (handler) ->
+  this.on Events.Click, handler
+
+
 
 ###
   SHORTHAND ANIMATION SYNTAX
@@ -217,29 +238,29 @@ Layer::animateTo = (properties, first, second, third) ->
   thisLayer = this
   time = curve = callback = null
 
-  if typeOf(first) == "number"
+  if typeof(first) == "number"
     time = first
-    if typeOf(second) == "string"
+    if typeof(second) == "string"
       curve = second
       callback = third
-    callback = second if typeOf(second) == "function"
-  else if typeOf(first) == "string"
+    callback = second if typeof(second) == "function"
+  else if typeof(first) == "string"
     curve = first
-    callback = second if typeOf(second) == "function"
-  else if typeOf(first) == "function"
+    callback = second if typeof(second) == "function"
+  else if typeof(first) == "function"
     callback = first
 
   thisLayer.animationTo = new Animation
     layer: thisLayer
     properties: properties
-    curve: Framer.config.defaultAnimation.curve
-    time: Framer.config.defaultAnimation.time
+    curve: Framer.Defaults.Animation.curve
+    time: Framer.Defaults.Animation.time
 
   if time? && !curve?
     thisLayer.animationTo.curve = 'ease-in-out'
     thisLayer.animationTo.time = time
 
-  if !curve?
+  if curve?
     thisLayer.animationTo.curve = curve
 
   thisLayer.animationTo.on 'start', ->
@@ -265,8 +286,8 @@ Layer::animateTo = (properties, first, second, third) ->
   * `MyLayer.slideFromLeft()` will animate the layer into the viewport **from** the left corner (from x=-width)
 
   Configuration:
-  * Framer.config.slideAnimation.time
-  * Framer.config.slideAnimation.curve
+  * Framer.Defaults.SlideAnimation.time
+  * Framer.Defaults.SlideAnimation.curve
 
 
   How to read the configuration:
@@ -290,7 +311,7 @@ _.defer ->
     _phone.clip = true
 
 
-Framer.config.slideAnimations =
+Framer.Shortcuts.slideAnimations =
   slideFromLeft:
     property: "x"
     factor: "width"
@@ -373,15 +394,15 @@ _.each Framer.Defaults.slideAnimations, (opts, name) ->
   To customize the fade animation, change the variables `Framer.Defaults.defaultFadeAnimation.time` and `defaultFadeAnimation.curve`.
 ###
 Layer::show = ->
-  @visible = true
   @opacity = 1
 
 Layer::hide = ->
-  @visible = false
+  @opacity = 1
+  @style.pointerEvents = 'none'
 
 
 Layer::fadeIn = (time = Framer.Defaults.FadeAnimation.time) ->
-  return if @opacity == 1 and @visible
+  return if @opacity == 1
 
   unless @visible
     @opacity = 0
@@ -395,7 +416,7 @@ Layer::fadeIn = (time = Framer.Defaults.FadeAnimation.time) ->
 
 
 Layer::fadeOut = (time = Framer.Defaults.FadeAnimation.time) ->
-  return if @opacity == 0 or !@visible
+  return if @opacity == 0
 
   that = @
   @animate
@@ -404,7 +425,7 @@ Layer::fadeOut = (time = Framer.Defaults.FadeAnimation.time) ->
     curve: Framer.Defaults.FadeAnimation.curve
     time: time
     callback: ->
-      that.visible = false
+      that.style.pointerEvents = 'none'
 
 
 ###
@@ -418,12 +439,12 @@ Layer::fadeOut = (time = Framer.Defaults.FadeAnimation.time) ->
   - Button_hover (hover)
 ###
 
-Framer.utils.everyLayer (layer) ->
+Framer.Shortcuts.everyLayer (layer) ->
   _default = layer.getChild('default')
 
   if layer.name.toLowerCase().indexOf('touchable') and _default
 
-    unless utils.isMobile()
+    unless Framer.Utils.isMobile()
       _hover = layer.getChild('hover')
     _down = layer.getChild('down')
 
@@ -480,7 +501,7 @@ class Device
   build: (args) ->
     _.extend(@, args)
 
-    if @enabled && @containerLayer && !utils.isMobile()
+    if @enabled && @containerLayer && !Framer.Utils.isMobile()
       @enableCursor()
 
       @backgroundLayer = new Layer
@@ -489,8 +510,9 @@ class Device
         width: window.innerWidth
         height: window.innerHeight
         image: @backgroundImage
+        backgroundColor: 'white'
       @backgroundLayer.name = 'BackgroundLayer'
-      @backgroundLayer.style.backgroundColor = 'white'
+      @backgroundLayer.style
 
       @handLayer = new Layer
         midX: window.innerWidth / 2
@@ -498,8 +520,8 @@ class Device
         width: @handWidth
         height: @handHeight
         image: @handImage
+        backgroundColor: 'transparent'
       @handLayer.name = 'HandLayer'
-      @handLayer.style.backgroundColor = 'transparent'
       @handLayer.superLayer = @backgroundLayer
 
       @deviceLayer = new Layer
@@ -523,7 +545,7 @@ class Device
       @resize()
 
   enableCursor: ->
-    document.body.style.cursor = "url(#{Framer.config.displayInDevice.bobbleImage}) 32 32, default"
+    document.body.style.cursor = "url(#{Framer.Defaults.displayInDevice.bobbleImage}) 32 32, default"
 
   refresh: ->
     if @enabled
@@ -566,12 +588,3 @@ _.defer ->
   Framer.Device.build Framer.Defaults.displayInDevice
 
 
-
-###
-  SHORTHAND FOR TAP EVENTS
-
-  Instead of `MyLayer.on(Events.TouchEnd, handler)`, use `MyLayer.tap(handler)`
-###
-
-Layer::tap = (handler) ->
-  this.on Events.TouchEnd, handler
