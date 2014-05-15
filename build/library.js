@@ -433,7 +433,7 @@
   };
 
   Layer.prototype.hide = function() {
-    this.opacity = 1;
+    this.opacity = 0;
     return this.style.pointerEvents = 'none';
   };
 

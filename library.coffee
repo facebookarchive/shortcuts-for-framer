@@ -397,7 +397,7 @@ Layer::show = ->
   @opacity = 1
 
 Layer::hide = ->
-  @opacity = 1
+  @opacity = 0
   @style.pointerEvents = 'none'
 
 
