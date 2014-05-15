@@ -199,7 +199,7 @@ Layer::tap = (handler) ->
   Instead of `MyLayer.on(Events.Click, handler)`, use `MyLayer.click(handler)`
 ###
 
-Layer::tap = (handler) ->
+Layer::click = (handler) ->
   this.on Events.Click, handler
 
 
