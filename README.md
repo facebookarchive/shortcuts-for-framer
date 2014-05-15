@@ -14,8 +14,10 @@ Include `library.js` right before `app.js` in your Framer `index.html` file.
 ## General
 * After importing your PSD/Sketch layers, call initialize to create global Javascript variables for every layer for quick access:
     
-```myLayers = Framer.Importer.load("...")
-Framer.Shortcuts.initialize(myLayers)```
+```
+myLayers = Framer.Importer.load("...");
+Framer.Shortcuts.initialize(myLayers);
+```
 
 * This will make `PSD["My Layer"]` will become `My_Layer`
 * `layer.originalFrame` stores the initial position and size of each exported layer, so you can easily revert back to them later.
