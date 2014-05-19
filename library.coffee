@@ -82,6 +82,8 @@ Framer.Shortcuts.initialize = (layers) ->
 
     Framer.Shortcuts.everyLayer (layer) ->
       window[layer.name] = layer
+      Framer.Shortcuts.saveOriginalFrame layer
+      Framer.Shortcuts.initializeTouchStates layer
 
 
 ###
@@ -167,7 +169,7 @@ Framer.Shortcuts.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, cappe
   ```MyLayer.x = 200; // now we set it to 200.
   MyLayer.x = MyLayer.originalFrame.x // now we set it back to its original value, 400.```
 ###
-Framer.Shortcuts.everyLayer (layer) ->
+Framer.Shortcuts.saveOriginalFrame = (layer) ->
   layer.originalFrame = layer.frame
 
 ###
@@ -429,7 +431,7 @@ Layer::fadeOut = (time = Framer.Defaults.FadeAnimation.time) ->
   - Button_hover (hover)
 ###
 
-Framer.Shortcuts.everyLayer (layer) ->
+Framer.Shortcuts.initializeTouchStates = (layer) ->
   _default = layer.getChild('default')
 
   if layer.name.toLowerCase().indexOf('touchable') and _default

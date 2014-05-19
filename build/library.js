@@ -93,7 +93,9 @@
     if (layers != null) {
       window.Layers = layers;
       return Framer.Shortcuts.everyLayer(function(layer) {
-        return window[layer.name] = layer;
+        window[layer.name] = layer;
+        Framer.Shortcuts.saveOriginalFrame(layer);
+        return Framer.Shortcuts.initializeTouchStates(layer);
       });
     }
   };
@@ -196,9 +198,9 @@
   */
 
 
-  Framer.Shortcuts.everyLayer(function(layer) {
+  Framer.Shortcuts.saveOriginalFrame = function(layer) {
     return layer.originalFrame = layer.frame;
-  });
+  };
 
   /*
     SHORTHAND HOVER SYNTAX
@@ -489,7 +491,7 @@
   */
 
 
-  Framer.Shortcuts.everyLayer(function(layer) {
+  Framer.Shortcuts.initializeTouchStates = function(layer) {
     var hitTarget, _default, _down, _hover;
 
     _default = layer.getChild('default');
@@ -539,7 +541,7 @@
         });
       }
     }
-  });
+  };
 
   /*
     DISPLAY IN DEVICE
