@@ -252,18 +252,17 @@ Layer::animateTo = (properties, first, second, third) ->
   else if typeof(first) == "function"
     callback = first
 
+  if time? && !curve?
+    curve = 'ease-in-out'
+  
+  curve = Framer.Defaults.Animation.curve if !curve?
+  time = Framer.Defaults.Animation.time if !time?
+
   thisLayer.animationTo = new Animation
     layer: thisLayer
     properties: properties
-    curve: Framer.Defaults.Animation.curve
-    time: Framer.Defaults.Animation.time
-
-  if time? && !curve?
-    thisLayer.animationTo.curve = 'ease-in-out'
-    thisLayer.animationTo.time = time
-
-  if curve?
-    thisLayer.animationTo.curve = curve
+    curve: curve
+    time: time
 
   thisLayer.animationTo.on 'start', ->
     thisLayer.isAnimating = true
@@ -393,15 +392,22 @@ _.each Framer.Shortcuts.slideAnimations, (opts, name) ->
 
   .fadeIn() and .fadeOut() are shortcuts to fade in a hidden layer, or fade out a visible layer.
 
+  These shortcuts work on individual layer objects as well as an array of layers.
+
+  Example:
+  * `MyLayer.fadeIn()` will fade in MyLayer using default timing.
+  * `[MyLayer, OtherLayer].fadeOut(4)` will fade out both MyLayer and OtherLayer over 4 seconds.
+
   To customize the fade animation, change the variables `Framer.Defaults.fadeAnimation.time` and `fadeAnimation.curve`.
 ###
 Layer::show = ->
   @opacity = 1
+  @
 
 Layer::hide = ->
   @opacity = 0
   @style.pointerEvents = 'none'
-
+  @
 
 Layer::fadeIn = (time = Framer.Defaults.FadeAnimation.time) ->
   return if @opacity == 1
@@ -410,14 +416,22 @@ Layer::fadeIn = (time = Framer.Defaults.FadeAnimation.time) ->
     @opacity = 0
     @visible = true
 
-  @animateTo opacity: 1, Framer.Defaults.FadeAnimation.curve, time
-
+  @animateTo opacity: 1, time, Framer.Defaults.FadeAnimation.curve
 
 Layer::fadeOut = (time = Framer.Defaults.FadeAnimation.time) ->
   return if @opacity == 0
 
   that = @
-  @animateTo opacity: 0, Framer.Defaults.FadeAnimation.curve, time, -> that.style.pointerEvents = 'none'
+  @animateTo opacity: 0, time, Framer.Defaults.FadeAnimation.curve, -> that.style.pointerEvents = 'none'
+
+# all of the easy in/out helpers work on an array of views as well as individual views
+_.each ['show', 'hide', 'fadeIn', 'fadeOut'], (fnString)->  
+  Object.defineProperty Array.prototype, fnString, 
+    enumerable: false
+    value: (time) ->
+      _.each @, (layer) ->
+        Layer.prototype[fnString].call(layer, time) if layer instanceof Layer
+      @
 
 
 ###
