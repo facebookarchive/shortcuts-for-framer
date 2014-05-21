@@ -19,10 +19,10 @@ Framer.Shortcuts.initialize(myLayers);
 * `layer.originalFrame` stores the initial position and size of each exported layer, so you can easily revert back to them later
 
 ## Animation
-* `layer.animateTo({x: 100})` is a shorthand that mirrors jQuery's animation syntax. You can specify a duration, curve and callback in order, and omit the ones you'd like.
+* `layer.animateTo({x: 100}, [time], [curve], [callback])` is a shorthand that mirrors jQuery's animation syntax. You can specify a duration, curve and callback in order, and omit the ones you'd like. Note that in Framer 3, time is now specified in seconds.
 * `layer.slideFromLeft()` `layer.slideToLeft()` (and similarly Left, Bottom, Top) are quick animation functions to animate full screen layers in and out of the viewport. Very useful for prototyping mobile flows.
 * `layer.show()` `layer.hide()` shows and hides layers.
-* `layer.fadeIn()` `layer.fadeOut()` fades in/out layers with an animation. You can use a custom duration too: `layer.fadeIn(500)`
+* `layer.fadeIn()` `layer.fadeOut()` fades in/out layers with an animation. You can use a custom duration too: `layer.fadeIn(0.5)`
 * `show`, `hide`, `fadeIn` and `fadeOut` can take layers or arrays containing layers.
 
 ## Events
