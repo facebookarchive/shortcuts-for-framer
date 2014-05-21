@@ -252,18 +252,17 @@ Layer::animateTo = (properties, first, second, third) ->
   else if typeof(first) == "function"
     callback = first
 
+  if time? && !curve?
+    curve = 'ease-in-out'
+  
+  curve = Framer.Defaults.Animation.curve if !curve?
+  time = Framer.Defaults.Animation.time if !time?
+
   thisLayer.animationTo = new Animation
     layer: thisLayer
     properties: properties
-    curve: Framer.Defaults.Animation.curve
-    time: Framer.Defaults.Animation.time
-
-  if time? && !curve?
-    thisLayer.animationTo.curve = 'ease-in-out'
-    thisLayer.animationTo.time = time
-
-  if curve?
-    thisLayer.animationTo.curve = curve
+    curve: curve
+    time: time
 
   thisLayer.animationTo.on 'start', ->
     thisLayer.isAnimating = true
