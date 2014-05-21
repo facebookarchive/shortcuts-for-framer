@@ -392,6 +392,12 @@ _.each Framer.Shortcuts.slideAnimations, (opts, name) ->
 
   .fadeIn() and .fadeOut() are shortcuts to fade in a hidden layer, or fade out a visible layer.
 
+  These shortcuts work on individual layer objects as well as an array of layers.
+
+  Example:
+  * `MyLayer.fadeIn()` will fade in MyLayer using default timing.
+  * `[MyLayer, OtherLayer].fadeOut(4)` will fade out both MyLayer and OtherLayer over 4 seconds.
+
   To customize the fade animation, change the variables `Framer.Defaults.fadeAnimation.time` and `fadeAnimation.curve`.
 ###
 Layer::show = ->
@@ -410,14 +416,22 @@ Layer::fadeIn = (time = Framer.Defaults.FadeAnimation.time) ->
     @opacity = 0
     @visible = true
 
-  @animateTo opacity: 1, Framer.Defaults.FadeAnimation.curve, time
-
+  @animateTo opacity: 1, time, Framer.Defaults.FadeAnimation.curve
 
 Layer::fadeOut = (time = Framer.Defaults.FadeAnimation.time) ->
   return if @opacity == 0
 
   that = @
-  @animateTo opacity: 0, Framer.Defaults.FadeAnimation.curve, time, -> that.style.pointerEvents = 'none'
+  @animateTo opacity: 0, time, Framer.Defaults.FadeAnimation.curve, -> that.style.pointerEvents = 'none'
+
+# all of the easy in/out helpers work on an array of views as well as individual views
+_.each ['show', 'hide', 'fadeIn', 'fadeOut'], (fnString)->  
+  Object.defineProperty Array.prototype, fnString, 
+    enumerable: false
+    value: (time) ->
+      _.each @, (layer) ->
+        Layer.prototype[fnString].call(layer, time) if layer instanceof Layer
+      @
 
 
 ###
