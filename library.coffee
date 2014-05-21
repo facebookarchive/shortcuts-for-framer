@@ -397,11 +397,12 @@ _.each Framer.Shortcuts.slideAnimations, (opts, name) ->
 ###
 Layer::show = ->
   @opacity = 1
+  @
 
 Layer::hide = ->
   @opacity = 0
   @style.pointerEvents = 'none'
-
+  @
 
 Layer::fadeIn = (time = Framer.Defaults.FadeAnimation.time) ->
   return if @opacity == 1
