@@ -24,7 +24,6 @@ Framer.Shortcuts = {}
 Framer.Defaults.displayInDevice =
   enabled: true
   resizeToFit: true
-  containerLayer: Layers?.Phone
   canvasWidth: 640
   canvasHeight: 1136
   deviceWidth: 770
@@ -79,6 +78,8 @@ Framer.Shortcuts.everyLayer = (fn) ->
 Framer.Shortcuts.initialize = (layers) ->
   if layers?
     window.Layers = layers
+
+    Framer.Defaults.displayInDevice.containerLayer = Layers.Phone
 
     Framer.Shortcuts.everyLayer (layer) ->
       window[layer.name] = layer

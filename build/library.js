@@ -27,7 +27,6 @@
   Framer.Defaults.displayInDevice = {
     enabled: true,
     resizeToFit: true,
-    containerLayer: typeof Layers !== "undefined" && Layers !== null ? Layers.Phone : void 0,
     canvasWidth: 640,
     canvasHeight: 1136,
     deviceWidth: 770,
@@ -91,6 +90,7 @@
   Framer.Shortcuts.initialize = function(layers) {
     if (layers != null) {
       window.Layers = layers;
+      Framer.Defaults.displayInDevice.containerLayer = Layers.Phone;
       return Framer.Shortcuts.everyLayer(function(layer) {
         window[layer.name] = layer;
         Framer.Shortcuts.saveOriginalFrame(layer);
