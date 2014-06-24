@@ -600,7 +600,7 @@
 
     Device.prototype.build = function(args) {
       _.extend(this, args);
-      if (this.enabled && this.containerLayer && !Framer.Utils.isMobile()) {
+      if (this.enabled && this.containerLayer && !Framer.Utils.isMobile() && navigator.userAgent.indexOf("FramerStudio") === -1) {
         this.enableCursor();
         this.backgroundLayer = new Layer({
           x: 0,

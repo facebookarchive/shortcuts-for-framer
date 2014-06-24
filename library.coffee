@@ -517,7 +517,7 @@ class Device
   build: (args) ->
     _.extend(@, args)
 
-    if @enabled && @containerLayer && !Framer.Utils.isMobile()
+    if @enabled && @containerLayer && !Framer.Utils.isMobile() && navigator.userAgent.indexOf("FramerStudio") == -1
       @enableCursor()
 
       @backgroundLayer = new Layer
