@@ -32,11 +32,11 @@ Framer.Defaults.displayInDevice =
   bobbleImage: 'http://shortcuts-for-framer.s3.amazonaws.com/bobble.png'
 
 Framer.Defaults.FadeAnimation =
-  curve: "ease-in-out"
+  curve: "bezier-curve"
   time: 0.2
 
 Framer.Defaults.SlideAnimation =
-  curve: "ease-in-out"
+  curve: "bezier-curve"
   time: 0.2
 
 
@@ -383,7 +383,7 @@ _.each Framer.Shortcuts.slideAnimations, (opts, name) ->
 
     if time
       _time = time
-      _curve = 'ease-in-out'
+      _curve = "bezier-curve"
     else
       _time = Framer.Defaults.SlideAnimation.time
       _curve = Framer.Defaults.SlideAnimation.curve
@@ -408,7 +408,7 @@ _.each Framer.Shortcuts.slideAnimations, (opts, name) ->
   * `MyLayer.fadeIn()` will fade in MyLayer using default timing.
   * `[MyLayer, OtherLayer].fadeOut(4)` will fade out both MyLayer and OtherLayer over 4 seconds.
 
-  To customize the fade animation, change the variables `Framer.Defaults.fadeAnimation.time` and `fadeAnimation.curve`.
+  To customize the fade animation, change the variables time and curve inside `Framer.Defaults.FadeAnimation`.
 ###
 Layer::show = ->
   @opacity = 1

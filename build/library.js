@@ -36,12 +36,12 @@
   };
 
   Framer.Defaults.FadeAnimation = {
-    curve: "ease-in-out",
+    curve: "bezier-curve",
     time: 0.2
   };
 
   Framer.Defaults.SlideAnimation = {
-    curve: "ease-in-out",
+    curve: "bezier-curve",
     time: 0.2
   };
 
@@ -436,7 +436,7 @@
       _animationConfig[_property] = opts.to * _factor;
       if (time) {
         _time = time;
-        _curve = 'ease-in-out';
+        _curve = "bezier-curve";
       } else {
         _time = Framer.Defaults.SlideAnimation.time;
         _curve = Framer.Defaults.SlideAnimation.curve;
@@ -463,7 +463,7 @@
     * `MyLayer.fadeIn()` will fade in MyLayer using default timing.
     * `[MyLayer, OtherLayer].fadeOut(4)` will fade out both MyLayer and OtherLayer over 4 seconds.
   
-    To customize the fade animation, change the variables `Framer.Defaults.fadeAnimation.time` and `fadeAnimation.curve`.
+    To customize the fade animation, change the variables time and curve inside `Framer.Defaults.FadeAnimation`.
    */
 
   Layer.prototype.show = function() {
