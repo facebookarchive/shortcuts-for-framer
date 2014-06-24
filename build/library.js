@@ -420,8 +420,8 @@
   };
 
   _.each(Framer.Shortcuts.slideAnimations, function(opts, name) {
-    return Layer.prototype[name] = function() {
-      var _animationConfig, _factor, _phone, _property;
+    return Layer.prototype[name] = function(time) {
+      var _animationConfig, _curve, _factor, _phone, _property, _time;
       _phone = Framer.Defaults.displayInDevice.containerLayer;
       if (!_phone) {
         console.log("Please wrap your project in a layer named Phone, or set Framer.Defaults.displayInDevice.containerLayer to whatever your wrapper layer is.");
@@ -434,10 +434,17 @@
       }
       _animationConfig = {};
       _animationConfig[_property] = opts.to * _factor;
+      if (time) {
+        _time = time;
+        _curve = 'ease-in-out';
+      } else {
+        _time = Framer.Defaults.SlideAnimation.time;
+        _curve = Framer.Defaults.SlideAnimation.curve;
+      }
       return this.animate({
         properties: _animationConfig,
-        time: Framer.Defaults.SlideAnimation.time,
-        curve: Framer.Defaults.SlideAnimation.curve
+        time: _time,
+        curve: _curve
       });
     };
   });

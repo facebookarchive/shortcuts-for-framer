@@ -363,7 +363,7 @@ Framer.Shortcuts.slideAnimations =
 
 
 _.each Framer.Shortcuts.slideAnimations, (opts, name) ->
-  Layer.prototype[name] = ->
+  Layer.prototype[name] = (time) ->
     _phone = Framer.Defaults.displayInDevice.containerLayer
 
     unless _phone
@@ -381,10 +381,17 @@ _.each Framer.Shortcuts.slideAnimations, (opts, name) ->
     _animationConfig = {}
     _animationConfig[_property] = opts.to * _factor
 
+    if time
+      _time = time
+      _curve = 'ease-in-out'
+    else
+      _time = Framer.Defaults.SlideAnimation.time
+      _curve = Framer.Defaults.SlideAnimation.curve
+
     this.animate
       properties: _animationConfig
-      time: Framer.Defaults.SlideAnimation.time
-      curve: Framer.Defaults.SlideAnimation.curve
+      time: _time
+      curve: _curve
 
 
 
