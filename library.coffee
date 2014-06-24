@@ -82,7 +82,8 @@ Framer.Shortcuts.initialize = (layers) ->
     Framer.Defaults.displayInDevice.containerLayer = Layers.Phone
 
     Framer.Shortcuts.everyLayer (layer) ->
-      window[layer.name] = layer
+      sanitizedLayerName = layer.name.replace(/[-+!?:*\[\]\(\)\/]/g, '').trim().replace(/\s/g, '_')
+      window[sanitizedLayerName] = layer
       Framer.Shortcuts.saveOriginalFrame layer
       Framer.Shortcuts.initializeTouchStates layer
 

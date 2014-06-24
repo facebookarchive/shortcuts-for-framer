@@ -92,7 +92,9 @@
       window.Layers = layers;
       Framer.Defaults.displayInDevice.containerLayer = Layers.Phone;
       return Framer.Shortcuts.everyLayer(function(layer) {
-        window[layer.name] = layer;
+        var sanitizedLayerName;
+        sanitizedLayerName = layer.name.replace(/[-+!?:*\[\]\(\)\/]/g, '').trim().replace(/\s/g, '_');
+        window[sanitizedLayerName] = layer;
         Framer.Shortcuts.saveOriginalFrame(layer);
         return Framer.Shortcuts.initializeTouchStates(layer);
       });
