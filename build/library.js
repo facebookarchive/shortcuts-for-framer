@@ -116,34 +116,55 @@
     `childLayers = Table.getChildren("Cell")` Returns all children whose name match Cell in an array.
    */
 
-  Layer.prototype.getChild = function(needle) {
-    var found, k, subLayer;
-    for (k in this.subLayers) {
-      subLayer = this.subLayers[k];
+  Layer.prototype.getChild = function(needle, recursive) {
+    var subLayer, _i, _j, _len, _len1, _ref, _ref1;
+    if (recursive == null) {
+      recursive = false;
+    }
+    _ref = this.subLayers;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      subLayer = _ref[_i];
       if (subLayer.name.toLowerCase().indexOf(needle.toLowerCase()) !== -1) {
         return subLayer;
       }
     }
-    for (k in this.subLayers) {
-      subLayer = this.subLayers[k];
-      found = subLayer.getChild(needle);
-      if (found) {
-        return found;
+    if (recursive) {
+      _ref1 = this.subLayers;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        subLayer = _ref1[_j];
+        if (subLayer.getChild(needle, recursive)) {
+          return subLayer.getChild(needle, recursive);
+        }
       }
     }
   };
 
-  Layer.prototype.getChildren = function(needle) {
-    var k, results, subLayer;
+  Layer.prototype.getChildren = function(needle, recursive) {
+    var results, subLayer, _i, _j, _len, _len1, _ref, _ref1;
+    if (recursive == null) {
+      recursive = false;
+    }
     results = [];
-    for (k in this.subLayers) {
-      subLayer = this.subLayers[k];
-      results = results.concat(subLayer.getChildren(needle));
+    if (recursive) {
+      _ref = this.subLayers;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        subLayer = _ref[_i];
+        results = results.concat(subLayer.getChildren(needle, recursive));
+      }
+      if (this.name.toLowerCase().indexOf(needle.toLowerCase()) !== -1) {
+        results.push(this);
+      }
+      return results;
+    } else {
+      _ref1 = this.subLayers;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        subLayer = _ref1[_j];
+        if (subLayer.name.toLowerCase().indexOf(needle.toLowerCase()) !== -1) {
+          results.push(subLayer);
+        }
+      }
+      return results;
     }
-    if (this.name.toLowerCase().indexOf(needle.toLowerCase()) !== -1) {
-      results.push(this);
-    }
-    return results;
   };
 
 

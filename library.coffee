@@ -102,30 +102,32 @@ Framer.Shortcuts.initialize = (layers) ->
 
   `childLayers = Table.getChildren("Cell")` Returns all children whose name match Cell in an array.
 ###
-Layer::getChild = (needle) ->
+Layer::getChild = (needle, recursive = false) ->
   # Search direct children
-  for k of @subLayers
-    subLayer = @subLayers[k]
-    return subLayer if subLayer.name.toLowerCase().indexOf(needle.toLowerCase()) isnt -1
+  for subLayer in @subLayers
+    return subLayer if subLayer.name.toLowerCase().indexOf(needle.toLowerCase()) isnt -1 
 
   # Recursively search children of children
-  for k of @subLayers
-    subLayer = @subLayers[k]
-    found = subLayer.getChild(needle)
-    return found if found
+  if recursive
+    for subLayer in @subLayers
+      return subLayer.getChild(needle, recursive) if subLayer.getChild(needle, recursive) 
 
 
-Layer::getChildren = (needle) ->
+Layer::getChildren = (needle, recursive = false) ->
   results = []
 
-  for k of @subLayers
-    subLayer = @subLayers[k]
-    results = results.concat subLayer.getChildren(needle)
+  if recursive
+    for subLayer in @subLayers
+      results = results.concat subLayer.getChildren(needle, recursive)
+    results.push @ if @name.toLowerCase().indexOf(needle.toLowerCase()) isnt -1
+    return results
 
-  if @name.toLowerCase().indexOf(needle.toLowerCase()) isnt -1
-    results.push @
+  else
+    for subLayer in @subLayers
+      if subLayer.name.toLowerCase().indexOf(needle.toLowerCase()) isnt -1 
+        results.push subLayer 
+    return results
 
-  results
 
 
 ###
