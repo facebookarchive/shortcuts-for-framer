@@ -273,7 +273,7 @@
         x: 500
       },
       time: 500,
-      curve: 'ease-in-out'
+      curve: 'bezier-curve'
     })```
   
     New:
@@ -281,10 +281,10 @@
       x: 500
     })```
   
-    Optionally (with 1000ms duration and ease-in):
+    Optionally (with 1000ms duration and spring):
       ```MyLayer.animateTo({
       x: 500
-    }, 1000, "ease-in")
+    }, 1000, "spring(100,10,0)")
    */
 
   Layer.prototype.animateTo = function(properties, first, second, third) {
@@ -309,7 +309,7 @@
       callback = first;
     }
     if ((time != null) && (curve == null)) {
-      curve = 'ease-in-out';
+      curve = 'bezier-curve';
     }
     if (curve == null) {
       curve = Framer.Defaults.Animation.curve;
