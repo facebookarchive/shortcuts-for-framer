@@ -20,8 +20,6 @@
  */
 
 (function() {
-  var Device;
-
   Framer.Shortcuts = {};
 
   Framer.Defaults.displayInDevice = {
@@ -587,114 +585,5 @@
       }
     }
   };
-
-
-  /*
-    DISPLAY IN DEVICE
-  
-    If you're prototyping a mobile app, showing it in a device can be helpful for presentations.
-  
-    Wrapping everything in a top level layer (group in Sketch/PS) called "Phone" will enable this mode and wrap the layer in an iPhone image.
-   */
-
-  Device = (function() {
-    function Device() {}
-
-    Device.prototype.build = function(args) {
-      _.extend(this, args);
-      if (this.enabled && this.containerLayer && !Framer.Utils.isMobile() && navigator.userAgent.indexOf("FramerStudio") === -1) {
-        this.enableCursor();
-        this.backgroundLayer = new Layer({
-          x: 0,
-          y: 0,
-          width: window.innerWidth,
-          height: window.innerHeight,
-          image: this.backgroundImage,
-          backgroundColor: 'white'
-        });
-        this.backgroundLayer.name = 'BackgroundLayer';
-        this.backgroundLayer.style;
-        this.handLayer = new Layer({
-          midX: window.innerWidth / 2,
-          midY: window.innerHeight / 2,
-          width: this.handWidth,
-          height: this.handHeight,
-          image: this.handImage,
-          backgroundColor: 'transparent'
-        });
-        this.handLayer.name = 'HandLayer';
-        this.handLayer.superLayer = this.backgroundLayer;
-        this.deviceLayer = new Layer({
-          midX: window.innerWidth / 2,
-          midY: window.innerHeight / 2,
-          width: this.deviceWidth,
-          height: this.deviceHeight,
-          image: this.deviceImage
-        });
-        this.deviceLayer.name = 'DeviceLayer';
-        window.addEventListener('resize', (function(_this) {
-          return function() {
-            return _this.resize();
-          };
-        })(this));
-        window.addEventListener('keydown', (function(_this) {
-          return function(e) {
-            if (e.keyCode === 32) {
-              _this.enabled = !_this.enabled;
-              return _this.refresh();
-            }
-          };
-        })(this));
-        this.refresh();
-        return this.resize();
-      }
-    };
-
-    Device.prototype.enableCursor = function() {
-      return document.body.style.cursor = "url(" + Framer.Defaults.displayInDevice.bobbleImage + ") 32 32, default";
-    };
-
-    Device.prototype.refresh = function() {
-      if (this.enabled) {
-        this.containerLayer.superLayer = this.deviceLayer;
-        this.containerLayer.midX = this.deviceLayer.width / 2;
-        this.containerLayer.midY = this.deviceLayer.height / 2;
-        this.backgroundLayer.show();
-        return this.deviceLayer.show();
-      } else {
-        this.containerLayer.superLayer = null;
-        this.containerLayer.x = 0;
-        this.containerLayer.y = 0;
-        this.backgroundLayer.hide();
-        return this.deviceLayer.hide();
-      }
-    };
-
-    Device.prototype.resize = function() {
-      var scaleFactor;
-      this.backgroundLayer.width = window.innerWidth;
-      this.backgroundLayer.height = window.innerHeight;
-      this.deviceLayer.midX = this.handLayer.midX = window.innerWidth / 2;
-      if (this.resizeToFit) {
-        scaleFactor = window.innerHeight / this.deviceLayer.height * 0.95;
-        this.deviceLayer.scale = this.handLayer.scale = scaleFactor;
-      }
-      if (this.resizeToFit || window.innerHeight > this.deviceLayer.height) {
-        return this.deviceLayer.midY = this.handLayer.midY = window.innerHeight / 2;
-      } else {
-        this.deviceLayer.y = this.handLayer.y = 0;
-        return this.backgroundLayer.height = this.deviceLayer.height;
-      }
-    };
-
-    return Device;
-
-  })();
-
-  Framer.Device = new Device;
-
-  _.defer(function() {
-    return Framer.Device.build(Framer.Defaults.displayInDevice);
-  });
 
 }).call(this);
