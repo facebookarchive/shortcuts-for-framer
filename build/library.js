@@ -22,25 +22,13 @@
 (function() {
   Framer.Shortcuts = {};
 
-  Framer.Defaults.displayInDevice = {
-    enabled: true,
-    resizeToFit: true,
-    canvasWidth: 640,
-    canvasHeight: 1136,
-    deviceWidth: 770,
-    deviceHeight: 1610,
-    deviceImage: 'http://shortcuts-for-framer.s3.amazonaws.com/iphone-5s-white.png',
-    bobbleImage: 'http://shortcuts-for-framer.s3.amazonaws.com/bobble.png'
-  };
-
   Framer.Defaults.FadeAnimation = {
     curve: "bezier-curve",
     time: 0.2
   };
 
   Framer.Defaults.SlideAnimation = {
-    curve: "bezier-curve",
-    time: 0.2
+    curve: "spring(400,40,0)"
   };
 
 
@@ -88,7 +76,6 @@
   Framer.Shortcuts.initialize = function(layers) {
     if (layers != null) {
       window.Layers = layers;
-      Framer.Defaults.displayInDevice.containerLayer = Layers.Phone;
       return Framer.Shortcuts.everyLayer(function(layer) {
         var sanitizedLayerName;
         sanitizedLayerName = layer.name.replace(/[-+!?:*\[\]\(\)\/]/g, '').trim().replace(/\s/g, '_');
@@ -339,7 +326,7 @@
   
     Shorthand syntax for animating layers in and out of the viewport. Assumes that the layer you are animating is a whole screen and has the same dimensions as your container.
   
-    To use this, you need to place everything in a parent layer called Phone. The library will automatically enable masking and size it to 640 * 1136.
+    Enable the device preview in Framer Studio to use this – it lets this script figure out what the bounds of your screen are.
   
     Example:
     * `MyLayer.slideToLeft()` will animate the layer **to** the left corner of the screen (from its current position)
@@ -347,6 +334,7 @@
     * `MyLayer.slideFromLeft()` will animate the layer into the viewport **from** the left corner (from x=-width)
   
     Configuration:
+    * (By default we use a spring curve that approximates iOS. To use a time duration, change the curve to bezier-curve.)
     * Framer.Defaults.SlideAnimation.time
     * Framer.Defaults.SlideAnimation.curve
   
@@ -359,18 +347,6 @@
       to: 0             // end value: inside the left corner ( x = width_layer )
     ```
    */
-
-  _.defer(function() {
-    var _phone;
-    _phone = Framer.Defaults.displayInDevice.containerLayer;
-    if (_phone != null) {
-      _phone.x = 0;
-      _phone.y = 0;
-      _phone.width = Framer.Defaults.displayInDevice.canvasWidth;
-      _phone.height = Framer.Defaults.displayInDevice.canvasHeight;
-      return _phone.clip = true;
-    }
-  });
 
   Framer.Shortcuts.slideAnimations = {
     slideFromLeft: {
@@ -421,10 +397,12 @@
 
   _.each(Framer.Shortcuts.slideAnimations, function(opts, name) {
     return Layer.prototype[name] = function(time) {
-      var _animationConfig, _curve, _factor, _phone, _property, _time;
-      _phone = Framer.Defaults.displayInDevice.containerLayer;
+      var err, _animationConfig, _curve, _factor, _phone, _property, _ref, _ref1, _time;
+      _phone = (_ref = Framer.Device) != null ? (_ref1 = _ref.screen) != null ? _ref1.frame : void 0 : void 0;
       if (!_phone) {
-        console.log("Please wrap your project in a layer named Phone, or set Framer.Defaults.displayInDevice.containerLayer to whatever your wrapper layer is.");
+        err = "Please select a device preview in Framer Studio to use the slide preset animations.";
+        print(err);
+        console.log(err);
         return;
       }
       _property = opts.property;
