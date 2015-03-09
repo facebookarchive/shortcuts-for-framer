@@ -413,6 +413,7 @@ _.each Framer.Shortcuts.slideAnimations, (opts, name) ->
 ###
 Layer::show = ->
   @opacity = 1
+  @style.pointerEvents = 'auto'
   @
 
 Layer::hide = ->
