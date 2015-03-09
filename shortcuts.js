@@ -20,20 +20,9 @@
  */
 
 (function() {
-  var Device;
+  var shortcuts;
 
-  Framer.Shortcuts = {};
-
-  Framer.Defaults.displayInDevice = {
-    enabled: true,
-    resizeToFit: true,
-    canvasWidth: 640,
-    canvasHeight: 1136,
-    deviceWidth: 770,
-    deviceHeight: 1610,
-    deviceImage: 'http://shortcuts-for-framer.s3.amazonaws.com/iphone-5s-white.png',
-    bobbleImage: 'http://shortcuts-for-framer.s3.amazonaws.com/bobble.png'
-  };
+  shortcuts = {};
 
   Framer.Defaults.FadeAnimation = {
     curve: "bezier-curve",
@@ -41,8 +30,7 @@
   };
 
   Framer.Defaults.SlideAnimation = {
-    curve: "bezier-curve",
-    time: 0.2
+    curve: "spring(400,40,0)"
   };
 
 
@@ -52,12 +40,12 @@
     Shorthand for applying a function to every layer in the document.
   
     Example:
-    ```Framer.Shortcuts.everyLayer(function(layer) {
+    ```shortcuts.everyLayer(function(layer) {
       layer.visible = false;
     });```
    */
 
-  Framer.Shortcuts.everyLayer = function(fn) {
+  shortcuts.everyLayer = function(fn) {
     var layerName, _layer, _results;
     _results = [];
     for (layerName in window.Layers) {
@@ -76,7 +64,7 @@
     This has to be called manually in Framer3 after you've ran the importer.
   
     myLayers = Framer.Importer.load("...")
-    Framer.Shortcuts.initialize(myLayers)
+    shortcuts.initialize(myLayers)
   
     If you have a layer in your PSD/Sketch called "NewsFeed", this will create a global Javascript variable called "NewsFeed" that you can manipulate with Framer.
   
@@ -85,20 +73,22 @@
   
     Notes:
     Javascript has some names reserved for internal function that you can't override (for ex. )
+    If you call initialize without anything, it will use all currently available layers.
    */
 
-  Framer.Shortcuts.initialize = function(layers) {
-    if (layers != null) {
-      window.Layers = layers;
-      Framer.Defaults.displayInDevice.containerLayer = Layers.Phone;
-      return Framer.Shortcuts.everyLayer(function(layer) {
-        var sanitizedLayerName;
-        sanitizedLayerName = layer.name.replace(/[-+!?:*\[\]\(\)\/]/g, '').trim().replace(/\s/g, '_');
-        window[sanitizedLayerName] = layer;
-        Framer.Shortcuts.saveOriginalFrame(layer);
-        return Framer.Shortcuts.initializeTouchStates(layer);
-      });
+  shortcuts.initialize = function(layers) {
+    var layer;
+    if (!layers) {
+      layer = Framer.CurrentContext._layerList;
     }
+    window.Layers = layers;
+    return shortcuts.everyLayer(function(layer) {
+      var sanitizedLayerName;
+      sanitizedLayerName = layer.name.replace(/[-+!?:*\[\]\(\)\/]/g, '').trim().replace(/\s/g, '_');
+      window[sanitizedLayerName] = layer;
+      shortcuts.saveOriginalFrame(layer);
+      return shortcuts.initializeTouchStates(layer);
+    });
   };
 
 
@@ -186,7 +176,7 @@
     Make sure NewMin is smaller than NewMax if you're using this. If you need an inverse proportion, try swapping OldMin and OldMax.
    */
 
-  Framer.Shortcuts.convertRange = function(OldMin, OldMax, OldValue, NewMin, NewMax, capped) {
+  shortcuts.convertRange = function(OldMin, OldMax, OldValue, NewMin, NewMax, capped) {
     var NewRange, NewValue, OldRange;
     OldRange = OldMax - OldMin;
     NewRange = NewMax - NewMin;
@@ -217,7 +207,7 @@
     MyLayer.x = MyLayer.originalFrame.x // now we set it back to its original value, 400.```
    */
 
-  Framer.Shortcuts.saveOriginalFrame = function(layer) {
+  shortcuts.saveOriginalFrame = function(layer) {
     return layer.originalFrame = layer.frame;
   };
 
@@ -341,7 +331,7 @@
   
     Shorthand syntax for animating layers in and out of the viewport. Assumes that the layer you are animating is a whole screen and has the same dimensions as your container.
   
-    To use this, you need to place everything in a parent layer called Phone. The library will automatically enable masking and size it to 640 * 1136.
+    Enable the device preview in Framer Studio to use this – it lets this script figure out what the bounds of your screen are.
   
     Example:
     * `MyLayer.slideToLeft()` will animate the layer **to** the left corner of the screen (from its current position)
@@ -349,6 +339,7 @@
     * `MyLayer.slideFromLeft()` will animate the layer into the viewport **from** the left corner (from x=-width)
   
     Configuration:
+    * (By default we use a spring curve that approximates iOS. To use a time duration, change the curve to bezier-curve.)
     * Framer.Defaults.SlideAnimation.time
     * Framer.Defaults.SlideAnimation.curve
   
@@ -362,19 +353,7 @@
     ```
    */
 
-  _.defer(function() {
-    var _phone;
-    _phone = Framer.Defaults.displayInDevice.containerLayer;
-    if (_phone != null) {
-      _phone.x = 0;
-      _phone.y = 0;
-      _phone.width = Framer.Defaults.displayInDevice.canvasWidth;
-      _phone.height = Framer.Defaults.displayInDevice.canvasHeight;
-      return _phone.clip = true;
-    }
-  });
-
-  Framer.Shortcuts.slideAnimations = {
+  shortcuts.slideAnimations = {
     slideFromLeft: {
       property: "x",
       factor: "width",
@@ -421,12 +400,14 @@
     }
   };
 
-  _.each(Framer.Shortcuts.slideAnimations, function(opts, name) {
+  _.each(shortcuts.slideAnimations, function(opts, name) {
     return Layer.prototype[name] = function(time) {
-      var _animationConfig, _curve, _factor, _phone, _property, _time;
-      _phone = Framer.Defaults.displayInDevice.containerLayer;
+      var err, _animationConfig, _curve, _factor, _phone, _property, _ref, _ref1, _time;
+      _phone = (_ref = Framer.Device) != null ? (_ref1 = _ref.screen) != null ? _ref1.frame : void 0 : void 0;
       if (!_phone) {
-        console.log("Please wrap your project in a layer named Phone, or set Framer.Defaults.displayInDevice.containerLayer to whatever your wrapper layer is.");
+        err = "Please select a device preview in Framer Studio to use the slide preset animations.";
+        print(err);
+        console.log(err);
         return;
       }
       _property = opts.property;
@@ -538,7 +519,7 @@
     - Button_hover (hover)
    */
 
-  Framer.Shortcuts.initializeTouchStates = function(layer) {
+  shortcuts.initializeTouchStates = function(layer) {
     var hitTarget, _default, _down, _hover;
     _default = layer.getChild('default');
     if (layer.name.toLowerCase().indexOf('touchable') && _default) {
@@ -589,113 +570,6 @@
     }
   };
 
-
-  /*
-    DISPLAY IN DEVICE
-  
-    If you're prototyping a mobile app, showing it in a device can be helpful for presentations.
-  
-    Wrapping everything in a top level layer (group in Sketch/PS) called "Phone" will enable this mode and wrap the layer in an iPhone image.
-   */
-
-  Device = (function() {
-    function Device() {}
-
-    Device.prototype.build = function(args) {
-      _.extend(this, args);
-      if (this.enabled && this.containerLayer && !Framer.Utils.isMobile() && navigator.userAgent.indexOf("FramerStudio") === -1) {
-        this.enableCursor();
-        this.backgroundLayer = new Layer({
-          x: 0,
-          y: 0,
-          width: window.innerWidth,
-          height: window.innerHeight,
-          image: this.backgroundImage,
-          backgroundColor: 'white'
-        });
-        this.backgroundLayer.name = 'BackgroundLayer';
-        this.backgroundLayer.style;
-        this.handLayer = new Layer({
-          midX: window.innerWidth / 2,
-          midY: window.innerHeight / 2,
-          width: this.handWidth,
-          height: this.handHeight,
-          image: this.handImage,
-          backgroundColor: 'transparent'
-        });
-        this.handLayer.name = 'HandLayer';
-        this.handLayer.superLayer = this.backgroundLayer;
-        this.deviceLayer = new Layer({
-          midX: window.innerWidth / 2,
-          midY: window.innerHeight / 2,
-          width: this.deviceWidth,
-          height: this.deviceHeight,
-          image: this.deviceImage
-        });
-        this.deviceLayer.name = 'DeviceLayer';
-        window.addEventListener('resize', (function(_this) {
-          return function() {
-            return _this.resize();
-          };
-        })(this));
-        window.addEventListener('keydown', (function(_this) {
-          return function(e) {
-            if (e.keyCode === 32) {
-              _this.enabled = !_this.enabled;
-              return _this.refresh();
-            }
-          };
-        })(this));
-        this.refresh();
-        return this.resize();
-      }
-    };
-
-    Device.prototype.enableCursor = function() {
-      return document.body.style.cursor = "url(" + Framer.Defaults.displayInDevice.bobbleImage + ") 32 32, default";
-    };
-
-    Device.prototype.refresh = function() {
-      if (this.enabled) {
-        this.containerLayer.superLayer = this.deviceLayer;
-        this.containerLayer.midX = this.deviceLayer.width / 2;
-        this.containerLayer.midY = this.deviceLayer.height / 2;
-        this.backgroundLayer.show();
-        return this.deviceLayer.show();
-      } else {
-        this.containerLayer.superLayer = null;
-        this.containerLayer.x = 0;
-        this.containerLayer.y = 0;
-        this.backgroundLayer.hide();
-        return this.deviceLayer.hide();
-      }
-    };
-
-    Device.prototype.resize = function() {
-      var scaleFactor;
-      this.backgroundLayer.width = window.innerWidth;
-      this.backgroundLayer.height = window.innerHeight;
-      this.deviceLayer.midX = this.handLayer.midX = window.innerWidth / 2;
-      if (this.resizeToFit) {
-        scaleFactor = window.innerHeight / this.deviceLayer.height * 0.95;
-        this.deviceLayer.scale = this.handLayer.scale = scaleFactor;
-      }
-      if (this.resizeToFit || window.innerHeight > this.deviceLayer.height) {
-        return this.deviceLayer.midY = this.handLayer.midY = window.innerHeight / 2;
-      } else {
-        this.deviceLayer.y = this.handLayer.y = 0;
-        return this.backgroundLayer.height = this.deviceLayer.height;
-      }
-    };
-
-    return Device;
-
-  })();
-
-  Framer.Device = new Device;
-
-  _.defer(function() {
-    return Framer.Device.build(Framer.Defaults.displayInDevice);
-  });
+  _.extend(exports, shortcuts);
 
 }).call(this);

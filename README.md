@@ -1,26 +1,25 @@
 # Shortcuts for Framer 3
 
-A collection of useful functions to make mobile prototyping with [Framer](http://www.framerjs.com/) easier.  For full reference, check our annotated source code in `library.coffee`.
+A collection of useful functions to make mobile prototyping with [Framer](http://www.framerjs.com/) easier.  For full reference, check our annotated source code in `shortcuts.coffee`.
 
-## How to use
+## How to use with Framer Studio
 
-### Framer Studio
-* Save your project and open the project folder
-* Download [library.js](https://rawgit.com/facebook/shortcuts-for-framer/master/build/library.js) into the `framer` folder inside your project folder
-* Include at the top of your code:
-```
-Utils.domLoadScriptSync("framer/library.js")
-```
+* Create a new Framer project
+* Put `shortcuts.coffee` in the `modules` folder of the project
+* On the top of your code, write `shortcuts = require "shortcuts"`
 
-### Traditional
-Include [library.js](https://rawgit.com/facebook/shortcuts-for-framer/master/build/library.js) right before `app.js` in your Framer `index.html` file. 
+## How to use with vanilla Framer.js
+
+* Add the build/shortcuts.js file to your head in index.html
+* `<script src="shortcuts.js"></script>`
+
 
 ## General
 * After importing your PSD/Sketch layers, call initialize to create global Javascript variables for every layer for quick access:
     
 ```
 myLayers = Framer.Importer.load "..."
-Framer.Shortcuts.initialize(myLayers)
+shortcuts.initialize()
 ```
 
 * This will let you access `PSD["My Layer"]` as simply `My_Layer`
@@ -29,7 +28,7 @@ Framer.Shortcuts.initialize(myLayers)
 
 ## Animation
 * `layer.animateTo({x: 100}, [time], [curve], [callback])` is a shorthand that mirrors jQuery's animation syntax. You can specify a duration, curve and callback in order, and omit the ones you'd like. Note that in Framer 3, time is now specified in seconds.
-* `layer.slideFromLeft()` `layer.slideToLeft()` (and similarly Left, Bottom, Top) are quick animation functions to animate full screen layers in and out of the viewport. Very useful for prototyping mobile flows.
+* `layer.slideFromLeft()` `layer.slideToLeft()` (and similarly Right, Bottom, Top) are quick animation functions to animate full screen layers in and out of the viewport. Very useful for prototyping mobile flows.
 * `layer.show()` `layer.hide()` shows and hides layers.
 * `layer.fadeIn()` `layer.fadeOut()` fades in/out layers with an animation. You can use a custom duration too: `layer.fadeIn(0.5)`
 * `show`, `hide`, `fadeIn` and `fadeOut` can take layers or arrays containing layers.
@@ -40,16 +39,14 @@ Framer.Shortcuts.initialize(myLayers)
 * Shortcut: instead of `layer.on('mouseover', function() {}); layer.on('mouseout', function() {});` use `layer.hover(function() {}, function() {})`
 
 ## Display in Device
-* If your prototype has a parent `Phone` group, we automatically add a phone image around your prototype and resize to fit in a browser screen. Great for presenting!
-* By default, the parent group is called `Phone` and the device is an iPhone in a 640x1136 canvas. Check the `Display In Device` section in the source code to see how you can configure for different devices.
-* Press the space bar key to toggle this on and off.
+* *Has been removed since this functionality got added  Framer core*
 
 ## Others
 * `layer.getChild('name')` and `layer.getChildren('name')` retrieve the children of a layer by name. Useful when traversing the layer hierarchy.
-* `Framer.utils.convertRange(OldMin, OldMax, OldValue, NewMin, NewMax, [capped])` converts a number `oldValue` from one range `(oldMin, oldMax)` to another `(newMin, newMax)`. If you'd like to cap the output to NewMin and NewMax, enable `capped`.
+* *`Framer.utils.convertRange`* is deprecated in favor of the native `Utils.modulate`. Check [Framer docs](http://framerjs.com/docs/#utils.modulate) on how to use modulate.
 
 ## Customization
-All the animation functions use curves and times that can be customized. In addition, the Display in Device functionality can be changed to enable different devices, to add a holding hand image, or a background. Check the very top of `library.js` to see all the options.
+All the animation functions use curves and times that can be customized. Check the very top of `shortcuts.js` to see all the options.
 
 # Questions
 

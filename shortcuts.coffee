@@ -19,25 +19,14 @@
   CONFIGURATION
 ###
 
-Framer.Shortcuts = {}
-
-Framer.Defaults.displayInDevice =
-  enabled: true
-  resizeToFit: true
-  canvasWidth: 640
-  canvasHeight: 1136
-  deviceWidth: 770
-  deviceHeight: 1610
-  deviceImage: 'http://shortcuts-for-framer.s3.amazonaws.com/iphone-5s-white.png'
-  bobbleImage: 'http://shortcuts-for-framer.s3.amazonaws.com/bobble.png'
+shortcuts = {}
 
 Framer.Defaults.FadeAnimation =
   curve: "bezier-curve"
   time: 0.2
 
 Framer.Defaults.SlideAnimation =
-  curve: "bezier-curve"
-  time: 0.2
+  curve: "spring(400,40,0)"
 
 
 
@@ -47,11 +36,11 @@ Framer.Defaults.SlideAnimation =
   Shorthand for applying a function to every layer in the document.
 
   Example:
-  ```Framer.Shortcuts.everyLayer(function(layer) {
+  ```shortcuts.everyLayer(function(layer) {
     layer.visible = false;
   });```
 ###
-Framer.Shortcuts.everyLayer = (fn) ->
+shortcuts.everyLayer = (fn) ->
   for layerName of window.Layers
     _layer = window.Layers[layerName]
     fn _layer
@@ -65,7 +54,7 @@ Framer.Shortcuts.everyLayer = (fn) ->
   This has to be called manually in Framer3 after you've ran the importer.
 
   myLayers = Framer.Importer.load("...")
-  Framer.Shortcuts.initialize(myLayers)
+  shortcuts.initialize(myLayers)
 
   If you have a layer in your PSD/Sketch called "NewsFeed", this will create a global Javascript variable called "NewsFeed" that you can manipulate with Framer.
 
@@ -74,18 +63,19 @@ Framer.Shortcuts.everyLayer = (fn) ->
 
   Notes:
   Javascript has some names reserved for internal function that you can't override (for ex. )
+  If you call initialize without anything, it will use all currently available layers.
 ###
-Framer.Shortcuts.initialize = (layers) ->
-  if layers?
-    window.Layers = layers
+shortcuts.initialize = (layers) ->
 
-    Framer.Defaults.displayInDevice.containerLayer = Layers.Phone
+  layer = Framer.CurrentContext._layerList if not layers
 
-    Framer.Shortcuts.everyLayer (layer) ->
-      sanitizedLayerName = layer.name.replace(/[-+!?:*\[\]\(\)\/]/g, '').trim().replace(/\s/g, '_')
-      window[sanitizedLayerName] = layer
-      Framer.Shortcuts.saveOriginalFrame layer
-      Framer.Shortcuts.initializeTouchStates layer
+  window.Layers = layers
+
+  shortcuts.everyLayer (layer) ->
+    sanitizedLayerName = layer.name.replace(/[-+!?:*\[\]\(\)\/]/g, '').trim().replace(/\s/g, '_')
+    window[sanitizedLayerName] = layer
+    shortcuts.saveOriginalFrame layer
+    shortcuts.initializeTouchStates layer
 
 
 ###
@@ -146,7 +136,7 @@ Layer::getChildren = (needle, recursive = false) ->
   By default, this value might be outside the bounds of NewMin and NewMax if the OldValue is outside OldMin and OldMax. If you want to cap the final value to NewMin and NewMax, set capped to true.
   Make sure NewMin is smaller than NewMax if you're using this. If you need an inverse proportion, try swapping OldMin and OldMax.
 ###
-Framer.Shortcuts.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, capped) ->
+shortcuts.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, capped) ->
   OldRange = (OldMax - OldMin)
   NewRange = (NewMax - NewMin)
   NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
@@ -173,7 +163,7 @@ Framer.Shortcuts.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, cappe
   ```MyLayer.x = 200; // now we set it to 200.
   MyLayer.x = MyLayer.originalFrame.x // now we set it back to its original value, 400.```
 ###
-Framer.Shortcuts.saveOriginalFrame = (layer) ->
+shortcuts.saveOriginalFrame = (layer) ->
   layer.originalFrame = layer.frame
 
 ###
@@ -283,7 +273,7 @@ Layer::animateTo = (properties, first, second, third) ->
 
   Shorthand syntax for animating layers in and out of the viewport. Assumes that the layer you are animating is a whole screen and has the same dimensions as your container.
 
-  To use this, you need to place everything in a parent layer called Phone. The library will automatically enable masking and size it to 640 * 1136.
+  Enable the device preview in Framer Studio to use this – it lets this script figure out what the bounds of your screen are.
 
   Example:
   * `MyLayer.slideToLeft()` will animate the layer **to** the left corner of the screen (from its current position)
@@ -291,6 +281,7 @@ Layer::animateTo = (properties, first, second, third) ->
   * `MyLayer.slideFromLeft()` will animate the layer into the viewport **from** the left corner (from x=-width)
 
   Configuration:
+  * (By default we use a spring curve that approximates iOS. To use a time duration, change the curve to bezier-curve.)
   * Framer.Defaults.SlideAnimation.time
   * Framer.Defaults.SlideAnimation.curve
 
@@ -304,19 +295,8 @@ Layer::animateTo = (properties, first, second, third) ->
   ```
 ###
 
-_.defer ->
-  # Deferred, so if you change the config in your app.js, it's taken into account.
 
-  _phone = Framer.Defaults.displayInDevice.containerLayer
-  if _phone?
-    _phone.x = 0
-    _phone.y = 0
-    _phone.width = Framer.Defaults.displayInDevice.canvasWidth
-    _phone.height = Framer.Defaults.displayInDevice.canvasHeight
-    _phone.clip = true
-
-
-Framer.Shortcuts.slideAnimations =
+shortcuts.slideAnimations =
   slideFromLeft:
     property: "x"
     factor: "width"
@@ -363,12 +343,14 @@ Framer.Shortcuts.slideAnimations =
 
 
 
-_.each Framer.Shortcuts.slideAnimations, (opts, name) ->
+_.each shortcuts.slideAnimations, (opts, name) ->
   Layer.prototype[name] = (time) ->
-    _phone = Framer.Defaults.displayInDevice.containerLayer
+    _phone = Framer.Device?.screen?.frame
 
     unless _phone
-      console.log "Please wrap your project in a layer named Phone, or set Framer.Defaults.displayInDevice.containerLayer to whatever your wrapper layer is."
+      err = "Please select a device preview in Framer Studio to use the slide preset animations."
+      print err
+      console.log err
       return
 
     _property = opts.property
@@ -457,7 +439,7 @@ _.each ['show', 'hide', 'fadeIn', 'fadeOut'], (fnString)->
   - Button_hover (hover)
 ###
 
-Framer.Shortcuts.initializeTouchStates = (layer) ->
+shortcuts.initializeTouchStates = (layer) ->
   _default = layer.getChild('default')
 
   if layer.name.toLowerCase().indexOf('touchable') and _default
@@ -505,104 +487,5 @@ Framer.Shortcuts.initializeTouchStates = (layer) ->
           _default.show()
 
 
-
-
-###
-  DISPLAY IN DEVICE
-
-  If you're prototyping a mobile app, showing it in a device can be helpful for presentations.
-
-  Wrapping everything in a top level layer (group in Sketch/PS) called "Phone" will enable this mode and wrap the layer in an iPhone image.
-###
-
-class Device
-  build: (args) ->
-    _.extend(@, args)
-
-    if @enabled && @containerLayer && !Framer.Utils.isMobile() && navigator.userAgent.indexOf("FramerStudio") == -1
-      @enableCursor()
-
-      @backgroundLayer = new Layer
-        x: 0
-        y: 0
-        width: window.innerWidth
-        height: window.innerHeight
-        image: @backgroundImage
-        backgroundColor: 'white'
-      @backgroundLayer.name = 'BackgroundLayer'
-      @backgroundLayer.style
-
-      @handLayer = new Layer
-        midX: window.innerWidth / 2
-        midY: window.innerHeight / 2
-        width: @handWidth
-        height: @handHeight
-        image: @handImage
-        backgroundColor: 'transparent'
-      @handLayer.name = 'HandLayer'
-      @handLayer.superLayer = @backgroundLayer
-
-      @deviceLayer = new Layer
-        midX: window.innerWidth / 2
-        midY: window.innerHeight / 2
-        width: @deviceWidth
-        height: @deviceHeight
-        image: @deviceImage
-      @deviceLayer.name = 'DeviceLayer'
-
-      window.addEventListener 'resize', =>
-        @resize()
-
-      window.addEventListener 'keydown', (e) =>
-        if e.keyCode is 32
-          @enabled = !@enabled
-          @refresh()
-
-
-      @refresh()
-      @resize()
-
-  enableCursor: ->
-    document.body.style.cursor = "url(#{Framer.Defaults.displayInDevice.bobbleImage}) 32 32, default"
-
-  refresh: ->
-    if @enabled
-      @containerLayer.superLayer = @deviceLayer
-      @containerLayer.midX = @deviceLayer.width/2
-      @containerLayer.midY = @deviceLayer.height/2
-      @backgroundLayer.show()
-      @deviceLayer.show()
-    else
-      @containerLayer.superLayer = null
-      @containerLayer.x = 0
-      @containerLayer.y = 0
-      @backgroundLayer.hide()
-      @deviceLayer.hide()
-
-  resize: ->
-    # Position background to fill screen
-    @backgroundLayer.width = window.innerWidth
-    @backgroundLayer.height = window.innerHeight
-
-    # Position device to be centered in background
-    @deviceLayer.midX = @handLayer.midX = window.innerWidth/2
-
-    if @resizeToFit
-      # Resize the device to fit screen vertically
-      scaleFactor = window.innerHeight / @deviceLayer.height * 0.95
-      @deviceLayer.scale = @handLayer.scale = scaleFactor
-
-    if @resizeToFit || window.innerHeight > @deviceLayer.height
-      # Device is smaller than window, so vertically center
-      @deviceLayer.midY = @handLayer.midY = window.innerHeight/2
-    else
-      # Window is smaller than mock, so align to top
-      @deviceLayer.y = @handLayer.y = 0
-      @backgroundLayer.height = @deviceLayer.height
-
-
-Framer.Device = new Device
-_.defer ->
-  Framer.Device.build Framer.Defaults.displayInDevice
-
+_.extend(exports, shortcuts)
 
