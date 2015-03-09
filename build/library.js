@@ -446,6 +446,7 @@
 
   Layer.prototype.show = function() {
     this.opacity = 1;
+    this.style.pointerEvents = 'auto';
     return this;
   };
 
