@@ -5,13 +5,13 @@ A collection of useful functions to make mobile prototyping with [Framer](http:/
 ## How to use with Framer Studio
 
 * Create a new Framer project
-* Put `shortcuts.coffee` in the `modules` folder of the project
-* On the top of your code, write `shortcuts = require "shortcuts"`
+* Download `shortcuts.coffee` and put it in the `modules` folder of the project
+* At the top of your code, write `shortcuts = require "shortcuts"`
 
 ## How to use with vanilla Framer.js
 
-* Add the build/shortcuts.js file to your head in index.html
-* `<script src="shortcuts.js"></script>`
+* Download `builds/shortcuts.js` and place it in your project folder
+* Add `<script src="shortcuts.js"></script>` inside the <head> section of index.html
 
 
 ## General
