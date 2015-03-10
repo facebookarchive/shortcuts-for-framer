@@ -19,7 +19,7 @@
   CONFIGURATION
 ###
 
-Framer.Shortcuts = {}
+shortcuts = {}
 
 Framer.Defaults.FadeAnimation =
   curve: "bezier-curve"
@@ -36,11 +36,11 @@ Framer.Defaults.SlideAnimation =
   Shorthand for applying a function to every layer in the document.
 
   Example:
-  ```Framer.Shortcuts.everyLayer(function(layer) {
+  ```shortcuts.everyLayer(function(layer) {
     layer.visible = false;
   });```
 ###
-Framer.Shortcuts.everyLayer = (fn) ->
+shortcuts.everyLayer = (fn) ->
   for layerName of window.Layers
     _layer = window.Layers[layerName]
     fn _layer
@@ -54,7 +54,7 @@ Framer.Shortcuts.everyLayer = (fn) ->
   This has to be called manually in Framer3 after you've ran the importer.
 
   myLayers = Framer.Importer.load("...")
-  Framer.Shortcuts.initialize(myLayers)
+  shortcuts.initialize(myLayers)
 
   If you have a layer in your PSD/Sketch called "NewsFeed", this will create a global Javascript variable called "NewsFeed" that you can manipulate with Framer.
 
@@ -63,16 +63,19 @@ Framer.Shortcuts.everyLayer = (fn) ->
 
   Notes:
   Javascript has some names reserved for internal function that you can't override (for ex. )
+  If you call initialize without anything, it will use all currently available layers.
 ###
-Framer.Shortcuts.initialize = (layers) ->
-  if layers?
-    window.Layers = layers
+shortcuts.initialize = (layers) ->
 
-    Framer.Shortcuts.everyLayer (layer) ->
-      sanitizedLayerName = layer.name.replace(/[-+!?:*\[\]\(\)\/]/g, '').trim().replace(/\s/g, '_')
-      window[sanitizedLayerName] = layer
-      Framer.Shortcuts.saveOriginalFrame layer
-      Framer.Shortcuts.initializeTouchStates layer
+  layer = Framer.CurrentContext._layerList if not layers
+
+  window.Layers = layers
+
+  shortcuts.everyLayer (layer) ->
+    sanitizedLayerName = layer.name.replace(/[-+!?:*\[\]\(\)\/]/g, '').trim().replace(/\s/g, '_')
+    window[sanitizedLayerName] = layer
+    shortcuts.saveOriginalFrame layer
+    shortcuts.initializeTouchStates layer
 
 
 ###
@@ -133,7 +136,7 @@ Layer::getChildren = (needle, recursive = false) ->
   By default, this value might be outside the bounds of NewMin and NewMax if the OldValue is outside OldMin and OldMax. If you want to cap the final value to NewMin and NewMax, set capped to true.
   Make sure NewMin is smaller than NewMax if you're using this. If you need an inverse proportion, try swapping OldMin and OldMax.
 ###
-Framer.Shortcuts.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, capped) ->
+shortcuts.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, capped) ->
   OldRange = (OldMax - OldMin)
   NewRange = (NewMax - NewMin)
   NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
@@ -160,7 +163,7 @@ Framer.Shortcuts.convertRange = (OldMin, OldMax, OldValue, NewMin, NewMax, cappe
   ```MyLayer.x = 200; // now we set it to 200.
   MyLayer.x = MyLayer.originalFrame.x // now we set it back to its original value, 400.```
 ###
-Framer.Shortcuts.saveOriginalFrame = (layer) ->
+shortcuts.saveOriginalFrame = (layer) ->
   layer.originalFrame = layer.frame
 
 ###
@@ -293,7 +296,7 @@ Layer::animateTo = (properties, first, second, third) ->
 ###
 
 
-Framer.Shortcuts.slideAnimations =
+shortcuts.slideAnimations =
   slideFromLeft:
     property: "x"
     factor: "width"
@@ -340,7 +343,7 @@ Framer.Shortcuts.slideAnimations =
 
 
 
-_.each Framer.Shortcuts.slideAnimations, (opts, name) ->
+_.each shortcuts.slideAnimations, (opts, name) ->
   Layer.prototype[name] = (time) ->
     _phone = Framer.Device?.screen?.frame
 
@@ -436,7 +439,7 @@ _.each ['show', 'hide', 'fadeIn', 'fadeOut'], (fnString)->
   - Button_hover (hover)
 ###
 
-Framer.Shortcuts.initializeTouchStates = (layer) ->
+shortcuts.initializeTouchStates = (layer) ->
   _default = layer.getChild('default')
 
   if layer.name.toLowerCase().indexOf('touchable') and _default
@@ -484,4 +487,5 @@ Framer.Shortcuts.initializeTouchStates = (layer) ->
           _default.show()
 
 
+_.extend(exports, shortcuts)
 

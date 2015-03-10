@@ -20,7 +20,9 @@
  */
 
 (function() {
-  Framer.Shortcuts = {};
+  var shortcuts;
+
+  shortcuts = {};
 
   Framer.Defaults.FadeAnimation = {
     curve: "bezier-curve",
@@ -38,12 +40,12 @@
     Shorthand for applying a function to every layer in the document.
   
     Example:
-    ```Framer.Shortcuts.everyLayer(function(layer) {
+    ```shortcuts.everyLayer(function(layer) {
       layer.visible = false;
     });```
    */
 
-  Framer.Shortcuts.everyLayer = function(fn) {
+  shortcuts.everyLayer = function(fn) {
     var layerName, _layer, _results;
     _results = [];
     for (layerName in window.Layers) {
@@ -62,7 +64,7 @@
     This has to be called manually in Framer3 after you've ran the importer.
   
     myLayers = Framer.Importer.load("...")
-    Framer.Shortcuts.initialize(myLayers)
+    shortcuts.initialize(myLayers)
   
     If you have a layer in your PSD/Sketch called "NewsFeed", this will create a global Javascript variable called "NewsFeed" that you can manipulate with Framer.
   
@@ -71,19 +73,22 @@
   
     Notes:
     Javascript has some names reserved for internal function that you can't override (for ex. )
+    If you call initialize without anything, it will use all currently available layers.
    */
 
-  Framer.Shortcuts.initialize = function(layers) {
-    if (layers != null) {
-      window.Layers = layers;
-      return Framer.Shortcuts.everyLayer(function(layer) {
-        var sanitizedLayerName;
-        sanitizedLayerName = layer.name.replace(/[-+!?:*\[\]\(\)\/]/g, '').trim().replace(/\s/g, '_');
-        window[sanitizedLayerName] = layer;
-        Framer.Shortcuts.saveOriginalFrame(layer);
-        return Framer.Shortcuts.initializeTouchStates(layer);
-      });
+  shortcuts.initialize = function(layers) {
+    var layer;
+    if (!layers) {
+      layer = Framer.CurrentContext._layerList;
     }
+    window.Layers = layers;
+    return shortcuts.everyLayer(function(layer) {
+      var sanitizedLayerName;
+      sanitizedLayerName = layer.name.replace(/[-+!?:*\[\]\(\)\/]/g, '').trim().replace(/\s/g, '_');
+      window[sanitizedLayerName] = layer;
+      shortcuts.saveOriginalFrame(layer);
+      return shortcuts.initializeTouchStates(layer);
+    });
   };
 
 
@@ -171,7 +176,7 @@
     Make sure NewMin is smaller than NewMax if you're using this. If you need an inverse proportion, try swapping OldMin and OldMax.
    */
 
-  Framer.Shortcuts.convertRange = function(OldMin, OldMax, OldValue, NewMin, NewMax, capped) {
+  shortcuts.convertRange = function(OldMin, OldMax, OldValue, NewMin, NewMax, capped) {
     var NewRange, NewValue, OldRange;
     OldRange = OldMax - OldMin;
     NewRange = NewMax - NewMin;
@@ -202,7 +207,7 @@
     MyLayer.x = MyLayer.originalFrame.x // now we set it back to its original value, 400.```
    */
 
-  Framer.Shortcuts.saveOriginalFrame = function(layer) {
+  shortcuts.saveOriginalFrame = function(layer) {
     return layer.originalFrame = layer.frame;
   };
 
@@ -348,7 +353,7 @@
     ```
    */
 
-  Framer.Shortcuts.slideAnimations = {
+  shortcuts.slideAnimations = {
     slideFromLeft: {
       property: "x",
       factor: "width",
@@ -395,7 +400,7 @@
     }
   };
 
-  _.each(Framer.Shortcuts.slideAnimations, function(opts, name) {
+  _.each(shortcuts.slideAnimations, function(opts, name) {
     return Layer.prototype[name] = function(time) {
       var err, _animationConfig, _curve, _factor, _phone, _property, _ref, _ref1, _time;
       _phone = (_ref = Framer.Device) != null ? (_ref1 = _ref.screen) != null ? _ref1.frame : void 0 : void 0;
@@ -514,7 +519,7 @@
     - Button_hover (hover)
    */
 
-  Framer.Shortcuts.initializeTouchStates = function(layer) {
+  shortcuts.initializeTouchStates = function(layer) {
     var hitTarget, _default, _down, _hover;
     _default = layer.getChild('default');
     if (layer.name.toLowerCase().indexOf('touchable') && _default) {
@@ -564,5 +569,7 @@
       }
     }
   };
+
+  _.extend(exports, shortcuts);
 
 }).call(this);
