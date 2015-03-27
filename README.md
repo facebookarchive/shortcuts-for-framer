@@ -19,7 +19,7 @@ A collection of useful functions to make mobile prototyping with [Framer](http:/
     
 ```
 myLayers = Framer.Importer.load "..."
-shortcuts.initialize()
+shortcuts.initialize(myLayers)
 ```
 
 * This will let you access `PSD["My Layer"]` as simply `My_Layer`
