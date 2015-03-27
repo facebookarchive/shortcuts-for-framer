@@ -1,39 +1,52 @@
-# Shortcuts for Framer
+# Shortcuts for Framer 3
 
-A collection of useful functions to make mobile prototyping with [Framer](http://www.framerjs.com/) easier.  For full reference, check our annotated source code in `library.coffee`.
+A collection of useful functions to make mobile prototyping with [Framer](http://www.framerjs.com/) easier.  For full reference, check our annotated source code in `shortcuts.coffee`.
 
-# How to use
+## How to use with Framer Studio
 
-Include `library.js` right before `app.js` in your Framer `index.html` file.
+* Create a new Framer project
+* Download `shortcuts.coffee` and put it in the `modules` folder of the project
+* At the top of your code, write `shortcuts = require "shortcuts"`
 
-# What is in Framer Library
+## How to use with vanilla Framer.js
 
-## Customization
-* Check the very top of `library.js` to see everything you can customize. All the animation functions use curves and times that can be customized. In addition, the Display in Device functionality can be changed to enable different devices, to add a holding hand image, or a background.
+* Download `builds/shortcuts.js` and place it in your project folder
+* Add `<script src="shortcuts.js"></script>` inside the <head> section of index.html
+
 
 ## General
-* `PSD["My View"]` becomes `My_View` - create global Javascript variables for every view exported using the Photoshop or Sketch plugins
-* `view.originalFrame` stores the initial position and size of each exported view, so you can easily revert back to them later.
+* After importing your PSD/Sketch layers, call initialize to create global Javascript variables for every layer for quick access:
+    
+```
+myLayers = Framer.Importer.load "..."
+shortcuts.initialize()
+```
+
+* This will let you access `PSD["My Layer"]` as simply `My_Layer`
+* Note that some Javascript variable names are [reserved](http://www.javascripter.net/faq/reserved.htm) and using them as layer names can cause problems. 
+* `layer.originalFrame` stores the initial position and size of each exported layer, so you can easily revert back to them later
 
 ## Animation
-* `view.animateTo(properties, [time], [curve], [callback])` is a shorthand that mirrors jQuery's animation syntax. Optional parameters can be omitted, for example: `view.animateTo({ x: 100 }, function() { view.hide() } )`
-* `view.slideFromLeft()` `view.slideToLeft()` (and similarly Left, Bottom, Top) are quick animation functions to animate full screen views in and out of the viewport. Very useful for prototyping mobile flows.
-* `view.show()` `view.hide()` shows and hides views.
-* `view.fadeIn()` `view.fadeOut()` fades in/out views with an animation. You can use a custom duration too: `view.fadeIn(500)`
+* `layer.animateTo({x: 100}, [time], [curve], [callback])` is a shorthand that mirrors jQuery's animation syntax. You can specify a duration, curve and callback in order, and omit the ones you'd like. Note that in Framer 3, time is now specified in seconds.
+* `layer.slideFromLeft()` `layer.slideToLeft()` (and similarly Right, Bottom, Top) are quick animation functions to animate full screen layers in and out of the viewport. Very useful for prototyping mobile flows.
+* `layer.show()` `layer.hide()` shows and hides layers.
+* `layer.fadeIn()` `layer.fadeOut()` fades in/out layers with an animation. You can use a custom duration too: `layer.fadeIn(0.5)`
+* `show`, `hide`, `fadeIn` and `fadeOut` can take layers or arrays containing layers.
 
 ## Events
 * Free hover and tap/click states: append `touchable` to a group's name, and include children that have `hover` and `down` in their name. Events will be automatically bound to show these hover and tap/click states.
-* Shortcut: instead of `view.on('touchup', function() {})` use `view.tap(function() {})`. This also works with mouse events.
-* Shortcut: instead of `view.on('mouseover', function() {}); view.on('mouseout', function() {});` use `view.hover(function() {}, function() {})`
+* Shortcut: instead of `layer.on('touchup', function() {})` use `layer.tap(function() {})`. This also works with mouse events.
+* Shortcut: instead of `layer.on('mouseover', function() {}); layer.on('mouseout', function() {});` use `layer.hover(function() {}, function() {})`
 
 ## Display in Device
-* If your prototype has a parent `Phone` group, we automatically add a phone image around your prototype and resize to fit in a browser screen. Great for presenting!
-* By default, the parent group is called `Phone` and the device is an iPhone in a 640x1136 canvas. Check the `Display In Device` section in the source code to see how you can configure for different devices.
-* Press the space bar key to toggle this on and off.
+* *Has been removed since this functionality got added  Framer core*
 
 ## Others
-* `view.getChild('name')` and `view.getChildren('name')` retrieve the children of a view by name. Useful when traversing the layer hierarchy.
-* `Framer.utils.convertRange(OldMin, OldMax, OldValue, NewMin, NewMax, [capped])` converts a number `oldValue` from one range `(oldMin, oldMax)` to another `(newMin, newMax)`. If you'd like to cap the output to NewMin and NewMax, enable `capped`.
+* `layer.getChild('name')` and `layer.getChildren('name')` retrieve the children of a layer by name. Useful when traversing the layer hierarchy.
+* *`Framer.utils.convertRange`* is deprecated in favor of the native `Utils.modulate`. Check [Framer docs](http://framerjs.com/docs/#utils.modulate) on how to use modulate.
+
+## Customization
+All the animation functions use curves and times that can be customized. Check the very top of `shortcuts.js` to see all the options.
 
 # Questions
 
