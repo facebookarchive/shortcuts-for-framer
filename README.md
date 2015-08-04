@@ -8,12 +8,6 @@ A collection of useful functions to make mobile prototyping with [Framer](http:/
 * Download `shortcuts.coffee` and put it in the `modules` folder of the project
 * At the top of your code, write `shortcuts = require "shortcuts"`
 
-## How to use with vanilla Framer.js
-
-* Download `builds/shortcuts.js` and place it in your project folder
-* Add `<script src="shortcuts.js"></script>` inside the <head> section of index.html
-
-
 ## General
 * After importing your PSD/Sketch layers, call initialize to create global Javascript variables for every layer for quick access:
     
